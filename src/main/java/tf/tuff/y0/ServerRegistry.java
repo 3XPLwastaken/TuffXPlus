@@ -1,4 +1,4 @@
-package tf.tuff;
+package tf.tuff.y0;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.java_websocket.client.WebSocketClient;
