@@ -1,4 +1,4 @@
-package tf.tuff;
+package tf.tuff.y0;
 
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
