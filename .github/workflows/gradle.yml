@@ -1,0 +1,26 @@
+name: Gradle Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: jdk
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: permission
+        run: chmod +x gradlew
+
+      - name: Run Gradle
+        run: ./gradlew build
