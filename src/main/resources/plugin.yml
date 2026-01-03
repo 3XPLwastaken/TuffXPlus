@@ -1,18 +1,24 @@
 name: TuffX
-version: 1.2.0
+version: 2.0
 main: tf.tuff.TuffX
 author: Potato
+authors: [Potato, llucasandersen, coleis1op]
 api-version: 1.18
 depend: [ViaVersion, ViaBackwards]
 
 commands:
-  tuffx:
-    description: Base command for the TuffX plugin.
-    usage: /<command> mute
-    permission: tuffx.mute
-    aliases: [tx]
+    viablocks:
+        description: Main command for ViaBlocks.
+        usage: /<command> <get|refresh>
+        permission: viablocks.command
 
 permissions:
-  tuffx.mute:
-    description: Allows a user to mute/unmute the TuffX console output.
-    default: op
+    viablocks.command:
+        description: Allows use of the /viablocks command.
+        default: op
+    viablocks.command.get:
+        description: Allows use of the /viablocks get subcommand.
+        default: op
+    viablocks.command.refresh:
+        description: Allows use of the /viablocks refresh subcommand.
+        default: op
