@@ -63,8 +63,6 @@ public class TuffActions implements Listener {
 
         this.swimmingManager = new Swimming(this);
         this.creativeManager = new CreativeMenu(this);
-
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
         plugin.getLogger().info("Finished enabling features.");
         logEnable();
     }

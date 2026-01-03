@@ -167,8 +167,8 @@ viaBlocksPlugin.blockListener.handleBlockGrow(e);
     }
     
         @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockSpread(BlockSpreadEvent event) {
-    viaBlockPlugin.blockListener.handleBlockSpread(e);
+    public void onBlockSpread(BlockSpreadEvent e) {
+    viaBlocksPlugin.blockListener.handleBlockSpread(e);
 }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -201,7 +201,7 @@ viaBlocksPlugin.blockListener.handleBlockGrow(e);
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockFromTo(BlockFromToEvent e) {
-    viaBlocksPlugin.blockListener.handleBlockFeomTo(e);
+    viaBlocksPlugin.blockListener.handleBlockFromTo(e);
         y0Plugin.handleBlockFromTo(e);
     }
   

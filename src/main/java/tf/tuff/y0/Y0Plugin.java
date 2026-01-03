@@ -41,7 +41,7 @@ import it.unimi.dsi.fastutil.bytes.*;
 
 import tf.tuff.TuffX;
 
-public class Y0Plugin implements Listener, PluginMessageListener {
+public class Y0Plugin {
 
     public static final String CH = "eagler:below_y0";
     public ViaBlockIds v;
@@ -72,11 +72,6 @@ public class Y0Plugin implements Listener, PluginMessageListener {
             getLightEmissionMethod = null;
         }
     }
-    
-    @Override
-public void onPluginMessageReceived(String channel, org.bukkit.entity.Player player, byte[] message) {
-
-}
 
     private static final Map<Material, Integer> legacy_light_map = Map.ofEntries(
         Map.entry(Material.TORCH, 14),
@@ -132,8 +127,8 @@ public void onPluginMessageReceived(String channel, org.bukkit.entity.Player pla
             .build();
 
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CH);
-        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CH, this);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CH, plugin);
+
         if (v == null) v = new ViaBlockIds(this.plugin);
         lfe();
 
