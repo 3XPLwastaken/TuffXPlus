@@ -38,6 +38,16 @@ registry:
 # \\  //  ||<<
 #  \\//   ||//
  
+# Set to true to show the ViaBlocks ASCII art logo in the console on startup.
+# Set to false for a cleaner, more minimal console.
+show-startup-logo: true
+
+# Set to true to send a welcome book to players with the ViaBlocks client when they join for the first time.
+# This book can explain the feature and provide a link for bug reports.
+send-welcome-book: true
+
+# Set to true to enable detailed logging in the server console for debugging.
+debug: false
 # Sync mode controls how often chunk and block updates are sent to clients.
 # normal: base speed for fast sync.
 # reduced: much slower updates to minimize client lag.
