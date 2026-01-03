@@ -104,8 +104,6 @@ public class TuffActions extends JavaPlugin implements Listener {
                 creativeManager.handleCreativeReady(player);
             } else if ("swim_ready".equals(action) && swimmingEnabled){
                 swimmingManager.handleSwimReady(player);
-            //} else if ("trim_ready".equals(action) && trimEnabled){
-                //trimManager.handleTrimReady(player);
             } else if ("give_creative_item".equals(action) && creativeEnabled){
                 if (player.getGameMode() != GameMode.CREATIVE) {
                     return;
@@ -137,10 +135,6 @@ public class TuffActions extends JavaPlugin implements Listener {
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
     }
 
-    //public Trims getTrimsManager() {
-        //return trimManager;
-    //}
-
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (swimmingEnabled) {
@@ -149,9 +143,6 @@ public class TuffActions extends JavaPlugin implements Listener {
         if (shieldEnabled) {
             shieldManager.handleShieldQuit(event);
         }
-        //if (trimEnabled) {
-            //trimManager.handleTrimQuit(event);
-        //}
         tuffPlayers.remove(event.getPlayer().getUniqueId());
     }
 
