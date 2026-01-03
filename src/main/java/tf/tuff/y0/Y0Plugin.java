@@ -41,7 +41,7 @@ import it.unimi.dsi.fastutil.bytes.*;
 
 import tf.tuff.TuffX;
 
-public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListener {
+public class Y0Plugin {
 
     public static final String CH = "eagler:below_y0";
     public ViaBlockIds v;
@@ -104,8 +104,7 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
 
     public record WCK(String w, int x, int z) {}
 
-    @Override
-    public void onLoad() {
+    public void onTuffXLoad() {
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().getSettings().reEncodeByDefault(false)
                 .checkForUpdates(false)
@@ -287,8 +286,7 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         } catch (IOException e) { return null; }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerChangeWorld(PlayerChangedWorldEvent e) {
+    public void handlePlayerChangeWorld(PlayerChangedWorldEvent e) {
         Player p = e.getPlayer();
         p.sendPluginMessage(this, CH, cdp());
         boolean isEnabledWorld = ew.contains(p.getWorld().getName());
@@ -298,8 +296,7 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerJoin(PlayerJoinEvent e) {
+    public void handlePlayerJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         p.sendPluginMessage(this, CH, cdp());
         boolean isEnabledWorld = ew.contains(p.getWorld().getName());
@@ -361,8 +358,7 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         aib.remove(id);
     }
 
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent e) {
+    public void handlePlayerQuit(PlayerQuitEvent e) {
         cp(e.getPlayer().getUniqueId());
     }
     
@@ -423,24 +419,21 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockBreak(BlockBreakEvent e) { 
+    public void handleBlockBreak(BlockBreakEvent e) { 
         if (e.getBlock().getY() < 0) {
             hbc(e.getBlock().getLocation(), e.getBlock().getBlockData(), Material.AIR.createBlockData()); 
             icc(e.getBlock().getWorld(), e.getBlock().getX(), e.getBlock().getZ());
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockPlace(BlockPlaceEvent e) { 
+    public void handleBlockPlace(BlockPlaceEvent e) { 
         if (e.getBlock().getY() < 0) {
             hbc(e.getBlock().getLocation(), e.getBlockReplacedState().getBlockData(), e.getBlock().getBlockData()); 
             icc(e.getBlock().getWorld(), e.getBlock().getX(), e.getBlock().getZ());
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockPhysics(BlockPhysicsEvent e) {
+    public void handleBlockPhysics(BlockPhysicsEvent e) {
         final Block b = e.getBlock();
         if (b.getY() < 0) {
             final Location l = b.getLocation();
@@ -456,8 +449,7 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockExplode(BlockExplodeEvent e) {
+    public void handleBlockExplode(BlockExplodeEvent e) {
         final ObjectOpenHashSet<WCK> ac = new ObjectOpenHashSet<>();
         final List<Block> btu = new ArrayList<>(e.blockList());
         new BukkitRunnable() {
@@ -476,8 +468,7 @@ public class Y0Plugin extends JavaPlugin implements Listener, PluginMessageListe
         }.runTask(this);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockFromTo(BlockFromToEvent e) {
+    public void handleBlockFromTo(BlockFromToEvent e) {
         final Block b = e.getToBlock();
         if (b.getY() < 0) {
             new BukkitRunnable() {
