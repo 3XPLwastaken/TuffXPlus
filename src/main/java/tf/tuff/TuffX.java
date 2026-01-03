@@ -17,6 +17,11 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.block.BlockGrowEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFormEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -97,7 +102,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
             }
         }
         lfe();
-    }
+    } 
 
     
     @Override
@@ -117,7 +122,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         return viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
-    }
+    } 
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
@@ -134,25 +139,47 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     public void onPlayerChangeWorld(PlayerChangedWorldEvent e) {
         y0Plugin.handlePlayerChangeWorld(e);
     }
+    
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockForm(BlockFormEvent event) {
+    viaBlocksPlugin.blockListener.handleBlockForm(e);
+}
+    
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockFade(BlockFadeEvent event) {
+    viaBlocksPlugin.blockListener.handleBlockFade(e);
+}
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent e) {
         y0Plugin.handlePlayerJoin(e);
     }
+    
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockGrow(BlockGrowEvent event) {
+viaBlocksPlugin.blockListener.handleBlockGrow(e);
+}
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         y0Plugin.handlePlayerQuit(e);
         viaBlocksPlugin.blockListener.handlePlayerQuit(e);
     }
+    
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockSpread(BlockSpreadEvent event) {
+    viaBlockPlugin.blockListener.handleBlockSpread(e);
+}
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent e) { 
+    viaBlocksPlugin.blockListener.handleBlockBreak(e);
         y0Plugin.handleBlockBreak(e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) { 
+    viaBlocksPlugin.blockListener.handleBlockPlace(e);
         y0Plugin.handleBlockPlace(e);
     }
 
@@ -160,14 +187,21 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     public void onBlockPhysics(BlockPhysicsEvent e) {
         y0Plugin.handleBlockPhysics(e);
     }
+    
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onChunkLoad(ChunkLoadEvent event) {
+            viaBlocksPlugin.blockListener.handleChunkLoad(e);
+}
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockExplode(BlockExplodeEvent e) {
+    viaBlocksPlugin.blockListener.handleBlockExplode(e);
         y0Plugin.handleBlockExplode(e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockFromTo(BlockFromToEvent e) {
+    viaBlocksPlugin.blockListener.handleBlockFeomTo(e);
         y0Plugin.handleBlockFromTo(e);
     }
   

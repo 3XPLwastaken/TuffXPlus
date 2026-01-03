@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-public class CustomBlockListener implements Listener {
+public class CustomBlockListener {
 
     private final ViaBlocksPlugin plugin;
     private final VersionAdapter versionAdapter;
@@ -101,8 +101,7 @@ public class CustomBlockListener implements Listener {
         chunkSenderManager.onPlayerQuit(event.getPlayer());
     }
 
-    @EventHandler
-    public void onChunkLoad(ChunkLoadEvent event) {
+    public void handleChunkLoad(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
         for (Player player : chunk.getWorld().getPlayers()) {
             chunkSenderManager.addChunkToQueue(player, chunk);
@@ -152,23 +151,20 @@ public class CustomBlockListener implements Listener {
         return foundBlocks;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockPlace(BlockPlaceEvent event) {
+    public void handleBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlock();
         if (isModernMaterial(block.getType())) {
             updateBlockStateForNearbyPlayers(block);
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockBreak(BlockBreakEvent event) {
+    public void handleBlockBreak(BlockBreakEvent event) {
         if (isModernMaterial(event.getBlock().getType())) {
             sendClearUpdateToNearbyPlayers(event.getBlock().getLocation());
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockExplode(BlockExplodeEvent event) {
+    public void handleBlockExplode(BlockExplodeEvent event) {
         for (Block block : event.blockList()) {
             if (isModernMaterial(block.getType())) {
                 sendClearUpdateToNearbyPlayers(block.getLocation());
@@ -176,31 +172,26 @@ public class CustomBlockListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockFromTo(BlockFromToEvent event) {
+    public void handleBlockFromTo(BlockFromToEvent event) {
         Block destroyedBlock = event.getToBlock();
         if (isModernMaterial(destroyedBlock.getType())) {
             sendClearUpdateToNearbyPlayers(destroyedBlock.getLocation());
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockGrow(BlockGrowEvent event) {
+    public void handleBlockGrow(BlockGrowEvent event) {
         updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockFade(BlockFadeEvent event) {
+    public void handleBlockFade(BlockFadeEvent event) {
         updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockForm(BlockFormEvent event) {
+    public void handleBlockForm(BlockFormEvent event) {
         updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onBlockSpread(BlockSpreadEvent event) {
+    public void handleBlockSpread(BlockSpreadEvent event) {
         updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
     }
 
