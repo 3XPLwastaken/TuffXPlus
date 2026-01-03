@@ -113,16 +113,16 @@ public class Y0Plugin {
         PacketEvents.getAPI().init();
 
         saveDefaultConfig();
-        d = getConfig().getBoolean("debug-mode", false);
-        ObjectArrayList<String> ewList = new ObjectArrayList<>(getConfig().getStringList("enabled-worlds"));
+        d = plugin.getConfig().getBoolean("debug-mode", false);
+        ObjectArrayList<String> ewList = new ObjectArrayList<>(plugin.getConfig().getStringList("enabled-worlds"));
         ew = new ObjectOpenHashSet<>(ewList.size());
         ew.addAll(ewList);
 
         this.cpl = new ChunkPacketListener(this);
 
         cc = CacheBuilder.newBuilder()
-            .maximumSize(getConfig().getInt("cache-size", 1024))
-            .expireAfterAccess(getConfig().getInt("cache-expiration", 5), TimeUnit.MINUTES)
+            .maximumSize(plugin.getConfig().getInt("cache-size", 1024))
+            .expireAfterAccess(plugin.getConfig().getInt("cache-expiration", 5), TimeUnit.MINUTES)
             .concurrencyLevel(Runtime.getRuntime().availableProcessors())
             .initialCapacity(256)
             .build();
@@ -133,7 +133,7 @@ public class Y0Plugin {
         if (v == null) v = new ViaBlockIds(this);
         lfe();
 
-        int ct = getConfig().getInt("chunk-processor-threads", -1);
+        int ct = plugin.getConfig().getInt("chunk-processor-threads", -1);
         int tc;
         if (ct <= 0) {
             tc = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
@@ -222,7 +222,7 @@ public class Y0Plugin {
             case "use_on_block":
                 break;
             case "ready":
-                if (getConfig().getBoolean("kick-outdated-clients", true)){
+                if (plugin.getConfig().getBoolean("kick-outdated-clients", true)){
                     p.kickPlayer("§cYour client is not compatible with the version of §6TuffX §cthe server has installed!\n§7Please update your client.");
                 }
         }
@@ -290,7 +290,7 @@ public class Y0Plugin {
         if (cachedData != null) {
             if (p.isOnline()) {
                 for (byte[] py : cachedData) {
-                    p.sendPluginMessage(TuffX.this, CH, py);
+                    p.sendPluginMessage(plugin, CH, py);
                 }
             }
             return;
@@ -313,17 +313,17 @@ public class Y0Plugin {
                     getLogger().severe("Payload creation failed for " + c.getX() + "," + c.getZ() + ": " + e.getMessage());
                 }
             }
-            TuffX.this.cc.put(k, pp);
+            plugin.cc.put(k, pp);
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (p.isOnline()) {
                         for (byte[] py : pp) {
-                            p.sendPluginMessage(TuffX.this, CH, py);
+                            p.sendPluginMessage(plugin, CH, py);
                         }
                     }
                 }
-            }.runTask(TuffX.this);
+            }.runTask(plugin);
         });
     }
 
@@ -477,7 +477,7 @@ public class Y0Plugin {
                 public void run() {
                     for (Player p : l.getWorld().getPlayers()) {
                         if (p.getLocation().distanceSquared(l) < 4096) {
-                            p.sendPluginMessage(TuffX.this, CH, py);
+                            p.sendPluginMessage(plugin, CH, py);
                         }
                     }
                 }
@@ -538,11 +538,11 @@ public class Y0Plugin {
                             public void run() {
                                 for (Player p : w.getPlayers()) {
                                     if (p.getLocation().distanceSquared(l) < 4096) {
-                                        p.sendPluginMessage(TuffX.this, CH, py);
+                                        p.sendPluginMessage(plugin, CH, py);
                                     }
                                 }
                             }
-                        }.runTask(TuffX.this);
+                        }.runTask(plugin);
                     } catch (IOException e) {
                         getLogger().severe("Failed to create lighting payload: " + e.getMessage());
                     }

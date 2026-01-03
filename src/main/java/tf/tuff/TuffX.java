@@ -80,8 +80,6 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
             new NetworkListener(this), PacketListenerPriority.NORMAL
         );
 
-        getServer().getMessenger().registerOutgoingPluginChannel(this, CH);
-        getServer().getMessenger().registerIncomingPluginChannel(this, CH, this);
         getServer().getPluginManager().registerEvents(this, this);
 
         if (getConfig().getBoolean("registry.enabled", false)) {
@@ -121,9 +119,9 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
       
         if (channel.equals("eagler:below_y0")) y0Plugin.handlePacket(player,message);
         
-        if (channel.equals("viablocks:handshake")) viaBlocksPlugin.handlePacket(player,mesaage);
+        if (channel.equals("viablocks:handshake")) viaBlocksPlugin.handlePacket(player,message);
         
-        if (channel.equals("eagler:tuffactions")) tuffActions.handlePacket(player,mesaage);
+        if (channel.equals("eagler:tuffactions")) tuffActions.handlePacket(player,message);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

@@ -60,8 +60,8 @@ public class TuffActions {
         getLogger().info("TuffActions has been enabled");
         getLogger().info("Enabling features...");
 
-        swimmingEnabled = getConfig().getBoolean("swimming.enabled", true);
-        creativeEnabled = getConfig().getBoolean("creative-items.enabled", true);
+        swimmingEnabled = plugin.getConfig().getBoolean("swimming.enabled", true);
+        creativeEnabled = plugin.getConfig().getBoolean("creative-items.enabled", true);
 
         if (swimmingEnabled) getLogger().info("Swimming enabled.");
         if (creativeEnabled) getLogger().info("Creative items enabled.");
@@ -103,8 +103,6 @@ public class TuffActions {
 
             if ("swimming_state".equals(action) && swimmingEnabled) {
                 swimmingManager.handleSwimState(player, in.readBoolean());
-            } else if ("shield_ready".equals(action) && shieldEnabled){
-                shieldManager.handleShieldReady(player);
             } else if ("creative_ready".equals(action) && creativeEnabled){
                 creativeManager.handleCreativeReady(player);
             } else if ("swim_ready".equals(action) && swimmingEnabled){
@@ -144,9 +142,6 @@ public class TuffActions {
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (swimmingEnabled) {
             swimmingManager.handleSwimQuit(event);
-        }
-        if (shieldEnabled) {
-            shieldManager.handleShieldQuit(event);
         }
         tuffPlayers.remove(event.getPlayer().getUniqueId());
     }

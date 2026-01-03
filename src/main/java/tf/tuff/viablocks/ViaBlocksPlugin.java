@@ -88,7 +88,7 @@ public final class ViaBlocksPlugin {
         }
 
         saveDefaultConfig();
-        this.sendWelcomeBook = getConfig().getBoolean("send-welcome-book", true);
+        this.sendWelcomeBook = plugin.getConfig().getBoolean("send-welcome-book", true);
         loadSyncSettings();
         setupPlayerData();
 
@@ -125,7 +125,7 @@ public final class ViaBlocksPlugin {
     }
 
     private void loadSyncSettings() {
-        String mode = getConfig().getString("sync-mode", "normal");
+        String mode = plugin.getConfig().getString("sync-mode", "normal");
         if (mode == null) {
             mode = "normal";
         }
