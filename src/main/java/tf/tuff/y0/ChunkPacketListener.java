@@ -10,33 +10,18 @@ import org.bukkit.entity.Player;
 
 public class ChunkPacketListener implements PacketListener {
 
-    private final TuffX plugin;
+    private final Y0Plugin plugin;
 
-    public ChunkPacketListener(TuffX plugin) {
+    public ChunkPacketListener(Y0Plugin plugin) {
         this.plugin = plugin;
     }
 
-    @Override
-    public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() == PacketType.Play.Server.CHUNK_DATA) {
-            Player player = (Player) event.getPlayer();
-
-            if (player == null || !plugin.isPlayerReady(player)) {
-                return;
+    public void handleChunk(TuffX plugin, Player player, World world, int chunkX, int chunkZ){
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (player.isOnline() && world.isChunkLoaded(chunkX, chunkZ)) {
+                Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+                plugin.processAndSendChunk(player, chunk);
             }
-
-            WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
-            int chunkX = wrapper.getColumn().getX();
-            int chunkZ = wrapper.getColumn().getZ();
-
-            World world = player.getWorld();
-            
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                if (player.isOnline() && world.isChunkLoaded(chunkX, chunkZ)) {
-                    Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-                    plugin.processAndSendChunk(player, chunk);
-                }
-            });
-        }
+        });
     }
 }
