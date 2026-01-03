@@ -423,7 +423,7 @@ public class Y0Plugin {
                     ssbu(l, ud);
                     icc(w, l.getBlockX(), l.getBlockZ());
                 }
-            }.runTask(this);
+            }.runTask(plugin);
         }
     }
 
@@ -443,7 +443,7 @@ public class Y0Plugin {
                     ac.forEach(cc::invalidate);
                 }
             }
-        }.runTask(this);
+        }.runTask(plugin);
     }
 
     public void handleBlockFromTo(BlockFromToEvent e) {
@@ -455,7 +455,7 @@ public class Y0Plugin {
                     ssbu(b.getLocation(), b.getBlockData());
                     icc(b.getWorld(), b.getX(), b.getZ());
                 }
-            }.runTask(this);
+            }.runTask(plugin);
         }
     }
 
@@ -481,7 +481,7 @@ public class Y0Plugin {
                         }
                     }
                 }
-            }.runTask(this);
+            }.runTask(plugin);
 
         } catch (IOException e) {
             plugin.getLogger().severe("Failed to create single block update payload: " + e.getMessage());
@@ -547,7 +547,7 @@ public class Y0Plugin {
                         plugin.getLogger().severe("Failed to create lighting payload: " + e.getMessage());
                     }
                 }
-            }.runTaskAsynchronously(this);
+            }.runTaskAsynchronously(plugin);
         }
     }
 

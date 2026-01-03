@@ -41,12 +41,7 @@ public class TuffActions {
     public static final Set<UUID> tuffPlayers = ConcurrentHashMap.newKeySet();
 
     public void onTuffXLoad() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
-        PacketEvents.getAPI().getSettings()
-                .reEncodeByDefault(false)
-                .checkForUpdates(false)
-                .bStats(false);
-        PacketEvents.getAPI().load();
+       
     }
     
     public TuffActions(TuffX plugin){
@@ -71,7 +66,7 @@ public class TuffActions {
         this.swimmingManager = new Swimming(this);
         this.creativeManager = new CreativeMenu(this);
 
-        plugin.getServer().getPluginManager().registerEvents(this, this);
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
         plugin.getLogger().info("Finished enabling features.");
         logEnable();
     }
