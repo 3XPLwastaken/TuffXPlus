@@ -91,22 +91,7 @@ public final class ViaBlocksPlugin {
         loadSyncSettings();
         setupPlayerData();
 
-        if (this.showStartupLogo){
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "$$\\    $$\\ $$\\           $$$$$$$\\  $$\\                     $$\\                 ");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "$$ |   $$ |\\__|          $$  __$$\\ $$ |                    $$ |                ");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "$$ |   $$ |$$\\  $$$$$$\\  $$ |  $$ |$$ | $$$$$$\\   $$$$$$$\\ $$ |  $$\\  $$$$$$$\\ ");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "\\$$\\  $$  |$$ | \\____$$\\ $$$$$$$\\ |$$ |$$  __$$\\ $$  _____|$$ | $$  |$$  _____|");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + " \\$$\\$$  / $$ | $$$$$$$ |$$  __$$\\ $$ |$$ /  $$ |$$ /      $$$$$$  / \\$$$$$$\\  ");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "  \\$$$  /  $$ |$$  __$$ |$$ |  $$ |$$ |$$ |  $$ |$$ |      $$  _$$<   \\____$$\\ ");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "   \\$  /   $$ |\\$$$$$$$ |$$$$$$$  |$$ |\\$$$$$$  |\\$$$$$$$\\ $$ | \\$$\\ $$$$$$$  |");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "    \\_/    \\__| \\_______|\\_______/ \\__| \\______/  \\_______|\\__|  \\__|\\_______/ ");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "+ llucasandersen (PacketEvents migration and async safety fixes)");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "+ Potato (optimizations)");
-            getServer().getConsoleSender().sendMessage(ChatColor.AQUA + "- coleis1op, if ts is driving me crazy, im taking credit");
-            getServer().getConsoleSender().sendMessage("");
-        }
-
-        PacketEvents.getAPI().init();
+           
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL);
         getServer().getMessenger().registerIncomingPluginChannel(this, SERVERBOUND_CHANNEL, this);

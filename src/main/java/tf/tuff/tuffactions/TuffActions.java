@@ -160,8 +160,5 @@ public class TuffActions {
 
     public void logEnable(){
         getLogger().info("Selected features enabled.");
-        getLogger().info("Credits:");
-        getLogger().info("Swimming, shield mechanics, creative items - Potato (atypicalpotato)");
-        getLogger().info("PacketEvents integration, shaded build, 1.14+ support - llucasandersen");
     }
 }
