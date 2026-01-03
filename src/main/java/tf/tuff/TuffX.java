@@ -2,6 +2,7 @@ package tf.tuff;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import org.bukkit.command.Command;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
