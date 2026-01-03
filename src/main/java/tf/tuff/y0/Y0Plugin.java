@@ -124,9 +124,6 @@ public class Y0Plugin {
         ew.addAll(ewList);
 
         this.cpl = new ChunkPacketListener(this);
-        PacketEvents.getAPI().getEventManager().registerListener(
-            this.cpl, PacketListenerPriority.NORMAL
-        );
 
         cc = CacheBuilder.newBuilder()
             .maximumSize(getConfig().getInt("cache-size", 1024))

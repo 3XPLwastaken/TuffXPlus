@@ -10,7 +10,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import java.util.UUID;
 
-public class ChunkPacketListener extends PacketListenerAbstract {
+public class ChunkPacketListener {
 
     private static boolean initialized = false;
     private final ViaBlocksPlugin plugin;
@@ -24,28 +24,11 @@ public class ChunkPacketListener extends PacketListenerAbstract {
             return;
         }
 
-        PacketEvents.getAPI().getEventManager().registerListener(new ChunkPacketListener(plugin));
-        plugin.getLogger().info("PacketEvents listener for chunks registered successfully.");
         initialized = true;
     }
 
-    @Override
-    public void onPacketSend(PacketSendEvent event) {
-        if (event.getPacketType() != PacketType.Play.Server.CHUNK_DATA) {
-            return;
-        }
-
-        Player player = event.getPlayer();
-        if (player == null) {
-            return;
-        }
-
-        UUID playerId = player.getUniqueId();
-        WrapperPlayServerChunkData wrapper = new WrapperPlayServerChunkData(event);
-        int chunkX = wrapper.getColumn().getX();
-        int chunkZ = wrapper.getColumn().getZ();
-
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+    public void handleChunk(TuffX plugin, Player player, World world, int chunkX, int chunkZ){
+    plugin.getServer().getScheduler().runTask(plugin, () -> {
             Player livePlayer = plugin.getServer().getPlayer(playerId);
             if (livePlayer == null || !livePlayer.isOnline()) {
                 return;

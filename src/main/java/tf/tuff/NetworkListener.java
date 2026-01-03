@@ -32,6 +32,7 @@ public class NetworkListener implements PacketListener {
             World world = player.getWorld();
             
             plugin.y0Plugin.cpl.handleChunk(plugin, player, world, chunkX, chunkZ);
+            plugin.viaBlocksPlugin.cpl.handleChunk(plugin, player, world, chunkX, chunkZ);
         }
     }
 }

@@ -40,12 +40,14 @@ import it.unimi.dsi.fastutil.shorts.*;
 import it.unimi.dsi.fastutil.bytes.*;
 
 import tf.tuff.y0.Y0Plugin;
+import tf.tuff.viablocks.ViaBlocksPlugin;
 
 public class TuffX extends JavaPlugin implements Listener, PluginMessageListener {
 
     private ServerRegistry serverRegistry;
 
     private Y0Plugin y0Plugin;
+    private ViaBlocksPlugin viaBlocksPlugin;
     
     @Override
     public void onLoad() {
@@ -61,11 +63,12 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         PacketEvents.getAPI().init();
 
         y0Plugin = new Y0Plugin(this);
+        viaBlocksPlugin = new viaBlocksPlugin(this);
 
         saveDefaultConfig();
         
         PacketEvents.getAPI().getEventManager().registerListener(
-            new ChunkPacketListener(this), PacketListenerPriority.NORMAL
+            new NetworkListener(this), PacketListenerPriority.NORMAL
         );
 
         getServer().getMessenger().registerOutgoingPluginChannel(this, CH);
@@ -86,11 +89,13 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     @Override
     public void onLoad() {
         y0Plugin.onTuffXLoad();
+        viaBlocksPlugin.onTuffXLoad();
     }
     
     @Override
     public void onDisable() {
         y0Plugin.onTuffXDisable();
+    viaBlocksPlugin.onTuffXDisable();
         
         if (serverRegistry != null) {
             serverRegistry.disconnect();
@@ -99,12 +104,19 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
 
         PacketEvents.getAPI().terminate();
     }
+    
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
+    }
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!player.isOnline()) return;
       
-        if (channel.equals("eagler:below_y0") y0Plugin.handlePacket(player,message):
+        if (channel.equals("eagler:below_y0") y0Plugin.handlePacket(player,message);
+        
+        if (channel.equals("viablocks:handshake") viaBlocksPlugin.handlePacket(player,mesaage);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -120,6 +132,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         y0Plugin.handlePlayerQuit(e);
+        viaBlocksPlugin.blockListener.handlePlayerQuit(e);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

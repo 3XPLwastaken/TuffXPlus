@@ -34,14 +34,15 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class ViaBlocksPlugin extends JavaPlugin implements CommandExecutor, PluginMessageListener {
+public final class ViaBlocksPlugin {
 
     public static final String CLIENTBOUND_CHANNEL = "viablocks:data";
     public static final String SERVERBOUND_CHANNEL = "viablocks:handshake";
 
-    private final Set<UUID> viaBlocksEnabledPlayers = new HashSet<>();
-    private CustomBlockListener blockListener;
-    private ChunkSenderManager chunkSenderManager; 
+    public final Set<UUID> viaBlocksEnabledPlayers = new HashSet<>();
+    public CustomBlockListener blockListener;
+    public ChunkSenderManager chunkSenderManager; 
+    public ChunkPacketListener cpl;
     static ViaBlocksPlugin instance;
 
     private File playerDataFile;
@@ -50,21 +51,25 @@ public final class ViaBlocksPlugin extends JavaPlugin implements CommandExecutor
     private boolean showStartupLogo;
     public VersionAdapter versionAdapter;
 
-    private PaletteManager paletteManager;
+    public PaletteManager paletteManager;
     private long updateBatchDelayTicks = 1L;
     private long chunkSendIntervalTicks = 1L;
     private int chunksPerTick = 1;
 
     public boolean isPaper = false;
+    
+    public TuffX plugin;
+    
+    public ViaBlocksPlugin(TuffX plugin){
+         this.plugin = plugin;
+    }   
 
-    @Override
-    public void onLoad() {
+    public void onTuffXLoad() {
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().load();
     }
 
-    @Override
-    public void onEnable() {
+    public void onTuffXEnable() {
         instance = this;
         if (!setupVersionAdapter()) {
             getLogger().severe("Could not detect server version. This plugin may not work correctly.");
@@ -112,22 +117,19 @@ public final class ViaBlocksPlugin extends JavaPlugin implements CommandExecutor
 
         this.blockListener = new CustomBlockListener(this, this.versionAdapter, this.paletteManager, this.chunkSenderManager);
         getServer().getPluginManager().registerEvents(this.blockListener, this);
-        ChunkPacketListener.initialize(this);
+        this.cpl = new ChunkPacketListener(this);
 
         getCommand("viablocks").setExecutor(this);
         getLogger().info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
     }
 
-    @Override
-    public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-        if (channel.equals(SERVERBOUND_CHANNEL)) {
+    public void handlePacket(Player player, byte[] message) {
             if (!isPlayerEnabled(player)) {
                 getLogger().info("Received ViaBlocks handshake from player: " + player.getName() + ". Enabling custom blocks.");
                 setPlayerEnabled(player, true);
 
                 blockListener.onViaBlocksPlayerJoin(player);
             }
-        }
     }
 
     public PaletteManager getPaletteManager() {
@@ -157,8 +159,8 @@ public final class ViaBlocksPlugin extends JavaPlugin implements CommandExecutor
     private boolean setupVersionAdapter() {
         try { Pattern pattern = Pattern.compile("1\\.(\\d{1,2})"); Matcher matcher = pattern.matcher(Bukkit.getBukkitVersion()); if (matcher.find()) { int minorVersion = Integer.parseInt(matcher.group(1)); if (minorVersion >= 13) { this.versionAdapter = new ModernAdapter(); } else { this.versionAdapter = new LegacyAdapter(); } return true; } } catch (Exception e) { e.printStackTrace(); } return false;
     }
-    @Override
-    public void onDisable() {
+
+    public void onTuffXDisable() {
         PacketEvents.getAPI().terminate(); getServer().getMessenger().unregisterOutgoingPluginChannel(this, CLIENTBOUND_CHANNEL); getServer().getMessenger().unregisterIncomingPluginChannel(this, SERVERBOUND_CHANNEL); getLogger().info("ViaBlocks has been disabled.");
     }
     private void setupPlayerData() {
@@ -184,8 +186,8 @@ public final class ViaBlocksPlugin extends JavaPlugin implements CommandExecutor
         if (enabled) { viaBlocksEnabledPlayers.add(player.getUniqueId()); } else { viaBlocksEnabledPlayers.remove(player.getUniqueId()); }
     }
     public CustomBlockListener getBlockListener() { return this.blockListener; }
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+    public boolean onTuffXCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) { sender.sendMessage("This command can only be executed by a player."); return true; } Player player = (Player) sender; if (args.length > 0) { if (args[0].equalsIgnoreCase("get")) { if (!player.hasPermission("viablocks.command.get")) { player.sendMessage("§cYou do not have permission to use this command."); return true; } this.versionAdapter.giveCustomBlocks(player); player.sendMessage("§aYou have been given a set of custom blocks."); return true; } else if (args[0].equalsIgnoreCase("refresh")) { if (!player.hasPermission("viablocks.command.refresh")) { player.sendMessage("§cYou do not have permission to use this command."); return true; } player.sendMessage("§aRefreshing modern blocks in your view distance..."); World world = player.getWorld(); int viewDistance = this.versionAdapter.getClientViewDistance(player); int playerChunkX = player.getLocation().getChunk().getX(); int playerChunkZ = player.getLocation().getChunk().getZ(); for (int x = -viewDistance; x <= viewDistance; x++) { for (int z = -viewDistance; z <= viewDistance; z++) { int chunkX = playerChunkX + x; int chunkZ = playerChunkZ + z; if (world.isChunkLoaded(chunkX, chunkZ)) { blockListener.processChunkForSinglePlayer(world.getChunkAt(chunkX, chunkZ), player); } } } player.sendMessage("§aRefresh complete!"); return true; } } player.sendMessage("§cInvalid usage. Use: /viablocks <get|refresh>"); return true;
     }
 }

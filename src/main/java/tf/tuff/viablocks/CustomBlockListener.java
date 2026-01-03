@@ -93,8 +93,7 @@ public class CustomBlockListener implements Listener {
         });
     }
 
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
+    public void handlePlayerQuit(PlayerQuitEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
         pendingUpdates.remove(playerId);
         pendingFlush.remove(playerId);
