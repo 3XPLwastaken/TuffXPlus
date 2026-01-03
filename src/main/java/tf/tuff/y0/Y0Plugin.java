@@ -64,6 +64,8 @@ public class Y0Plugin {
 
     private static Method getLightEmissionMethod;
 
+    public ChunkPacketListener cpl;
+    
     static {
         try {
             getLightEmissionMethod = BlockData.class.getMethod("getLightEmission");
@@ -120,9 +122,10 @@ public class Y0Plugin {
         ObjectArrayList<String> ewList = new ObjectArrayList<>(getConfig().getStringList("enabled-worlds"));
         ew = new ObjectOpenHashSet<>(ewList.size());
         ew.addAll(ewList);
-        
+
+        this.cpl = new ChunkPacketListener(this);
         PacketEvents.getAPI().getEventManager().registerListener(
-            new ChunkPacketListener(this), PacketListenerPriority.NORMAL
+            this.cpl, PacketListenerPriority.NORMAL
         );
 
         cc = CacheBuilder.newBuilder()
