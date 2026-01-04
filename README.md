@@ -1,4 +1,4 @@
-# TuffX (Y0)
+# TuffX
 
 ![preview](https://raw.githubusercontent.com/TuffNetwork/TuffX-Plugin/refs/heads/main/img/showcase.png)
 :-:
