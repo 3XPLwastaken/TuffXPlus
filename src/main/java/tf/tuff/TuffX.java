@@ -122,9 +122,35 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         PacketEvents.getAPI().terminate();
     }
     
+    public boolean reloadTuffX(){
+        this.disable();
+        this.enable();
+    }
+    
+    public boolean TuffXCommand(CommandSender sender, Command command, String label, String[] args){
+        if (!sender instanceof Player) {
+            reloadTuffX();
+            return true;
+        } else {
+            Player player = (Player) sender;
+            if (args.length > 0) { 
+                if (args[0].equalsIgnoreCase("get")) { 
+                    if (!player.hasPermission("tuffx.reload")) { 
+                        player.sendMessage("§cYou do not have permission to use this command."); 
+                        return true; 
+                    } 
+                    reload();
+                    return true; 
+                } 
+            } 
+        }
+        return false;
+    }
+    
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        return viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
+        if (command.getName().equalsIgnoreCase("tuffx") return TuffXCommand(sender, command, label, args); 
+        if (command.getName().equalsIgnoreCase("viablocks") return viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
     } 
 
     @Override
