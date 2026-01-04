@@ -151,6 +151,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("tuffx")) return TuffXCommand(sender, command, label, args); 
         if (command.getName().equalsIgnoreCase("viablocks")) return viaBlocksPlugin.onTuffXCommand(sender, command, label, args);
+        return true;
     } 
 
     @Override
