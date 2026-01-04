@@ -63,7 +63,7 @@ public class CustomBlockListener {
     }
 
     public void onViaBlocksPlayerJoin(Player player) {
-        if (plugin.plugin.getConfig().getBoolean("send-welcome-book", true) && plugin.isFirstJoin(player)) {
+        if (plugin.plugin.getConfig().getBoolean("viablocks.send-welcome-book", true) && plugin.isFirstJoin(player)) {
             plugin.sendWelcomeGui(player);
             plugin.markPlayerAsJoined(player);
         }

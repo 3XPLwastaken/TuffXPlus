@@ -89,7 +89,7 @@ public final class ViaBlocksPlugin {
         }
 
         plugin.saveDefaultConfig();
-        this.sendWelcomeBook = plugin.getConfig().getBoolean("send-welcome-book", true);
+        this.sendWelcomeBook = plugin.getConfig().getBoolean("viablocks.send-welcome-book", true);
         loadSyncSettings();
         setupPlayerData();
 
@@ -126,7 +126,7 @@ public final class ViaBlocksPlugin {
     }
 
     private void loadSyncSettings() {
-        String mode = plugin.getConfig().getString("sync-mode", "normal");
+        String mode = plugin.getConfig().getString("viablocks.sync-mode", "normal");
         if (mode == null) {
             mode = "normal";
         }
@@ -169,7 +169,7 @@ public final class ViaBlocksPlugin {
         if (player == null) return false; return viaBlocksEnabledPlayers.contains(player.getUniqueId());
     }
     public void setPlayerEnabled(Player player, boolean enabled) {
-        if (enabled && plugin.getConfig().getBoolean("viablocks-enabled", false)) { viaBlocksEnabledPlayers.add(player.getUniqueId()); } else { viaBlocksEnabledPlayers.remove(player.getUniqueId()); }
+        if (enabled && plugin.getConfig().getBoolean("viablocks.viablocks-enabled", false)) { viaBlocksEnabledPlayers.add(player.getUniqueId()); } else { viaBlocksEnabledPlayers.remove(player.getUniqueId()); }
     }
     public CustomBlockListener getBlockListener() { return this.blockListener; }
 

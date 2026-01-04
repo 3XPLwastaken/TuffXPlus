@@ -112,16 +112,16 @@ public class Y0Plugin {
         PacketEvents.getAPI().init();
 
         plugin.saveDefaultConfig();
-        d = plugin.getConfig().getBoolean("debug-mode", false);
-        ObjectArrayList<String> ewList = new ObjectArrayList<>(plugin.getConfig().getStringList("enabled-worlds"));
+        d = plugin.getConfig().getBoolean("y0.debug-mode", false);
+        ObjectArrayList<String> ewList = new ObjectArrayList<>(plugin.getConfig().getStringList("y0.enabled-worlds"));
         ew = new ObjectOpenHashSet<>(ewList.size());
-        if (plugin.getConfig().getBoolean("y0-enabled", false)) ew.addAll(ewList);
+        if (plugin.getConfig().getBoolean("y0.y0-enabled", false)) ew.addAll(ewList);
 
         this.cpl = new ChunkPacketListener(this);
 
         cc = CacheBuilder.newBuilder()
-            .maximumSize(plugin.getConfig().getInt("cache-size", 1024))
-            .expireAfterAccess(plugin.getConfig().getInt("cache-expiration", 5), TimeUnit.MINUTES)
+            .maximumSize(plugin.getConfig().getInt("y0.cache-size", 1024))
+            .expireAfterAccess(plugin.getConfig().getInt("y0.cache-expiration", 5), TimeUnit.MINUTES)
             .concurrencyLevel(Runtime.getRuntime().availableProcessors())
             .initialCapacity(256)
             .build();
@@ -132,7 +132,7 @@ public class Y0Plugin {
         if (v == null) v = new ViaBlockIds(this.plugin);
         lfe();
 
-        int ct = plugin.getConfig().getInt("chunk-processor-threads", -1);
+        int ct = plugin.getConfig().getInt("y0.chunk-processor-threads", -1);
         int tc;
         if (ct <= 0) {
             tc = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
@@ -221,7 +221,7 @@ public class Y0Plugin {
             case "use_on_block":
                 break;
             case "ready":
-                if (plugin.getConfig().getBoolean("kick-outdated-clients", true)){
+                if (plugin.getConfig().getBoolean("y0.kick-outdated-clients", true)){
                     p.kickPlayer("§cYour client is not compatible with the version of §6TuffX §cthe server has installed!\n§7Please update your client.");
                 }
         }

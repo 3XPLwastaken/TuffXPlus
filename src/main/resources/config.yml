@@ -1,63 +1,64 @@
-#  \\//  //\\
-#   ||  ||  ||
-#   ||   \\//
+#  \\//  //=\\
+#   ||  ||   ||
+#   ||   \\=//
 
-#if t0 is enabled or not
-y0-enabled: true
+y0:
+  y0-enabled: true
 
-#debug mode
-debug-mode: false
+  #debug mode
+  debug-mode: false
 
-#worlds for y0 to be enabled in
-enabled-worlds:
-    - 'world'
+  #worlds for y0 to be enabled in
+  enabled-worlds:
+      - 'world'
 
-#the amount of threads for the chunk processor to use - using more threads processes chunks faster, but increases CPU usage
-#-1 is automatic
-chunk-processor-threads: -1
+  #the amount of threads for the chunk processor to use - using more threads processes chunks faster, but increases CPU usage
+  #-1 is automatic
+  chunk-processor-threads: -1
 
-#the size of the cache
-cache-size: 512
-#how long until the cache expires (minutes)
-cache-expiration: 5
+  #the size of the cache
+  cache-size: 512
+  #how long until the cache expires (minutes)
+  cache-expiration: 5
 
-# Kick outdated clients that (generally) not compatible with this version of TuffX
-kick-outdated-clients: true
+  # Kick outdated clients that (generally) not compatible with this version of TuffX
+  kick-outdated-clients: true
 
-#  ||\\ ||== //_\\
-#  ||// ||== || __
-#  ||\\ ||== \\__/  
 
-# add server to tuffclient server discovery
+#  ||\\ ||== //_\\ <>  //= ==== ||\\ \\//
+#  ||// ||== || __ ||  \\   ||  ||//  ||
+#  ||\\ ||== \\__/ || =//   ||  ||\\  ||
+
 registry:
-    # Set to true to list your server on the discovery
+    # Set to true to list your server on the tuffclient discovery
     enabled: false
     # websocket url for the discovery server (i'll update it later)
     server-url: 'ws://localhost:3000/ws'
     # ip for ur eaglercraft server
     server: 'wss://urserverip.net'
-    
-#\\    // ||\\
-# \\  //  ||<<
-#  \\//   ||//
  
+    
+#\\    // <>   //\\   ||\\ ||    //=\\   //= ||//   //=
+# \\  //  ||  //==\\  ||<< ||   ||   || ||   ||\\   \\
+#  \\//   || //    \\ ||// ||==  \\=//   \\= || \\ =//
+ 
+viablocks:
+  viablocks-enabled: true
 
-# Set to true to send a welcome book to players with the ViaBlocks client when they join for the first time.
-# This book can explain the feature and provide a link for bug reports.
-send-welcome-book: false
+  # Set to true to send a welcome book to players with the ViaBlocks client when they join for the first time.
+  # This book can explain the feature and provide a link for bug reports.
+  send-welcome-book: false
 
-viablocks-enabled: true
+  # Set to true to enable detailed logging in the server console for debugging.
+  debug: false
+  # Sync mode controls how often chunk and block updates are sent to clients.
+  # normal: base speed for fast sync.
+  # reduced: much slower updates to minimize client lag.
+  sync-mode: normal
 
-# Set to true to enable detailed logging in the server console for debugging.
-debug: false
-# Sync mode controls how often chunk and block updates are sent to clients.
-# normal: base speed for fast sync.
-# reduced: much slower updates to minimize client lag.
-sync-mode: normal
-
-# ====  //\\
-#  ||  //==\\
-#  || //    \\
+# //=\\ ==== ||  || ||== ||\\
+#||   || ||  ||==|| ||== ||//
+# \\=//  ||  ||  || ||== ||\\
 
 #1.13+ swimming
 swimming:
