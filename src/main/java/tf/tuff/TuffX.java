@@ -133,19 +133,16 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         if (args.length > 0) { 
             if (args[0].equalsIgnoreCase("reload")) { 
                 if (!(sender instanceof Player)) {
-                    reloadTuffX();
-                    player.sendMessage("TuffX reloaded."); 
-                    return true;
+                    reloadTuffX(); 
                 } else {
                     Player player = (Player) sender;
                     if (!player.hasPermission("tuffx.reload")) { 
                         player.sendMessage("§cYou do not have permission to use this command."); 
-                        return true; 
+                        return false; 
                     } 
                     reloadTuffX();
-                    return true; 
+                    player.sendMessage("TuffX reloaded.");
                 }
-                return true;
             } 
         } 
         return true;
