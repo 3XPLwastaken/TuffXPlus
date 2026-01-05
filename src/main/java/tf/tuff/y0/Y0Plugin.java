@@ -313,6 +313,11 @@ public class Y0Plugin {
         if (c == null || p == null || !p.isOnline() || cp == null || cp.isShutdown()) {
             return;
         }
+
+        if (ew != null && !ew.contains(c.getWorld().getName())) {
+             return;
+        }
+
         final WCK k = new WCK(c.getWorld().getName(), c.getX(), c.getZ());
         ObjectArrayList<byte[]> cachedData = cc.getIfPresent(k);
         if (cachedData != null) {
@@ -323,9 +328,10 @@ public class Y0Plugin {
             }
             return;
         }
+        
         cp.submit(() -> {
             final ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
-            final ChunkSnapshot s = c.getChunkSnapshot(true, false, false);
+            final ChunkSnapshot s = c.getChunkSnapshot(false, false, false);
             final Object2ObjectOpenHashMap<BlockData, int[]> cvt = tlcc.get();
             cvt.clear(); 
             for (int sy = -4; sy < 0; sy++) {

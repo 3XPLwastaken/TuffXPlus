@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CustomBlockListener {
 
@@ -53,6 +54,8 @@ public class CustomBlockListener {
     private static final int X_SHIFT = 12 + 26;
     private final Map<UUID, Map<Integer, List<Long>>> pendingUpdates = new HashMap<>();
     private final Set<UUID> pendingFlush = new HashSet<>();
+    
+    private final Map<BlockData, Integer> blockDataIdCache = new ConcurrentHashMap<>();
 
     public CustomBlockListener(ViaBlocksPlugin plugin, VersionAdapter versionAdapter, PaletteManager paletteManager, ChunkSenderManager chunkSenderManager) {
         this.plugin = plugin;
@@ -103,16 +106,23 @@ public class CustomBlockListener {
 
     public void handleChunkLoad(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
-        for (Player player : chunk.getWorld().getPlayers()) {
+
+        List<Player> players = chunk.getWorld().getPlayers();
+        if (players.isEmpty()) return;
+
+        for (Player player : players) {
             chunkSenderManager.addChunkToQueue(player, chunk);
         }
     }
 
     public void processChunkForSinglePlayer(Chunk chunk, Player player) {
+        if (!chunk.isLoaded()) return;
+
         ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
         World world = chunk.getWorld();
         int minHeight = getMinHeight(world);
         int maxHeight = world.getMaxHeight();
+        
         runAsync(() -> {
             Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
             if (!foundBlocks.isEmpty()) {
@@ -138,9 +148,13 @@ public class CustomBlockListener {
                     if (!this.modernMaterials.contains(blockType)) {
                         continue;
                     }
+                    
                     BlockData data = chunkSnapshot.getBlockData(x, y, z);
-                    String stateKey = data.getAsString();
-                    int materialId = this.paletteManager.getOrCreateId(stateKey);
+                    
+                    int materialId = blockDataIdCache.computeIfAbsent(data, key -> {
+                        return this.paletteManager.getOrCreateId(key.getAsString());
+                    });
+
                     if (materialId != -1) {
                         long packedLocation = packLocation(chunkX + x, y, chunkZ + z);
                         foundBlocks.computeIfAbsent(materialId, k -> new ArrayList<>()).add(packedLocation);
@@ -195,23 +209,16 @@ public class CustomBlockListener {
         updateBlockStateForNearbyPlayers(event.getNewState().getBlock());
     }
 
-    /*@EventHandler(priority = EventPriority.LOWEST) 
-    public void onBlockPhysics(BlockPhysicsEvent event) {
-        Block block = event.getBlock();
-        if (isModernMaterial(block.getType())) {
-            plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, () -> updateBlockStateForNearbyPlayers(block), 1L);
-        }
-    }*/
-
-
     private void updateBlockStateForNearbyPlayers(Block block) {
         Location blockLocation = block.getLocation();
         for (Player player : block.getWorld().getPlayers()) {
             if (plugin.isPlayerEnabled(player) && player.getLocation().distanceSquared(blockLocation) < 6400) {
                 int stateId;
                 if (isModernMaterial(block.getType())) {
-                    String fullState = block.getBlockData().getAsString();
-                    stateId = this.paletteManager.getOrCreateId(fullState);
+                    BlockData data = block.getBlockData();
+                    stateId = blockDataIdCache.computeIfAbsent(data, key -> {
+                         return this.paletteManager.getOrCreateId(key.getAsString());
+                    });
                 } else {
                     stateId = 0;
                 }
