@@ -99,21 +99,34 @@ public class CustomBlockListener {
         
         runSync(() -> {
             if (!player.isOnline()) return;
-            World world = player.getWorld();
-            int viewDistance = Math.min(this.versionAdapter.getClientViewDistance(player), 12);
-            int px = player.getLocation().getChunk().getX();
-            int pz = player.getLocation().getChunk().getZ();
+            sendInitialChunks(player);
+        });
+    }
 
-            for (int x = -viewDistance; x <= viewDistance; x++) {
-                for (int z = -viewDistance; z <= viewDistance; z++) {
-                    int cx = px + x;
-                    int cz = pz + z;
-                    if (world.isChunkLoaded(cx, cz)) {
-                        prepareChunkCache(world.getChunkAt(cx, cz));
+    private void sendInitialChunks(Player player) {
+        World world = player.getWorld();
+        int viewDistance = Math.min(this.versionAdapter.getClientViewDistance(player), 16);
+        int px = player.getLocation().getChunk().getX();
+        int pz = player.getLocation().getChunk().getZ();
+
+        for (int x = -viewDistance; x <= viewDistance; x++) {
+            for (int z = -viewDistance; z <= viewDistance; z++) {
+                int cx = px + x;
+                int cz = pz + z;
+                
+                if (world.isChunkLoaded(cx, cz)) {
+                    Chunk chunk = world.getChunkAt(cx, cz);
+                    
+                    prepareChunkCache(chunk);
+                    
+                    byte[] data = getExtraDataForChunk(world.getName(), cx, cz);
+                    
+                    if (data != null && data.length > 0) {
+                        player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, data);
                     }
                 }
             }
-        });
+        }
     }
 
     public void handlePlayerQuit(PlayerQuitEvent event) {
@@ -127,6 +140,21 @@ public class CustomBlockListener {
 
     public void handleChunkLoad(ChunkLoadEvent event) {
         prepareChunkCache(event.getChunk());
+    }
+
+    private void sendSingleUpdate(Location loc, int id) {
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("ADD_SINGLE");
+        out.writeInt(id);
+        out.writeLong(packLocation(loc));
+        byte[] packet = out.toByteArray();
+
+        double radiusSq = UPDATE_RADIUS_SQUARED;
+        for (Player p : loc.getWorld().getPlayers()) {
+            if (plugin.isPlayerEnabled(p) && p.getLocation().distanceSquared(loc) < radiusSq) {
+                p.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packet);
+            }
+        }
     }
 
     public void prepareChunkCache(Chunk chunk) {
@@ -250,20 +278,21 @@ public class CustomBlockListener {
     }
 
     private void handleModernBlockChange(BlockData before, BlockData after, Location location) {
-        if (!isFeatureEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location == null) {
-            return;
-        }
+        if (!isFeatureEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location == null) return;
+
         boolean beforeModern = before != null && isModernMaterial(before.getMaterial());
         boolean afterModern = after != null && isModernMaterial(after.getMaterial());
-        if (!beforeModern && !afterModern) {
-            return;
-        }
-        if (afterModern) {
-            sendBlockStateUpdateToNearbyPlayers(location, after);
-        } else {
-            sendClearUpdateToNearbyPlayers(location);
-        }
+        
+        if (!beforeModern && !afterModern) return;
+
         invalidateChunkCache(location.getChunk());
+
+        int id = 0;
+        if (afterModern) {
+            id = getMaterialId(after);
+        }
+
+        sendSingleUpdate(location, id);
     }
 
     private boolean isFeatureEnabled() {
@@ -334,6 +363,12 @@ public class CustomBlockListener {
         }
         byte[] packetData = buildChunkPacket(updateData);
         player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
+    }
+
+    private int getMaterialId(BlockData data) {
+        return blockDataIdCache.computeIfAbsent(data, key -> 
+            this.paletteManager.getOrCreateId(key.getAsString())
+        );
     }
     
     private byte[] buildChunkPacket(Map<Integer, List<Long>> blockData) {
