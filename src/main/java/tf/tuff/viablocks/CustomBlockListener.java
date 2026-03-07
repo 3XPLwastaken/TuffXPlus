@@ -198,13 +198,19 @@ public class CustomBlockListener {
         ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
         int minHeight = getMinHeight(chunk.getWorld());
         int maxHeight = chunk.getWorld().getMaxHeight();
-        
-        Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
-        if (foundBlocks.isEmpty()) {
-            chunkPacketCache.put(key, EMPTY_PACKET);
-        } else {
-            chunkPacketCache.put(key, buildChunkPacket(foundBlocks));
-        }
+
+        plugin.chunkExecutor.submit(() -> {
+            try {
+                if (chunkPacketCache.getIfPresent(key) != null) return;
+                Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
+                if (foundBlocks.isEmpty()) {
+                    chunkPacketCache.put(key, EMPTY_PACKET);
+                } else {
+                    chunkPacketCache.put(key, buildChunkPacket(foundBlocks));
+                }
+            } catch (Exception e) {
+            }
+        });
     }
 
     public byte[] getExtraDataForChunk(String worldName, int x, int z) {
@@ -236,15 +242,26 @@ public class CustomBlockListener {
         int minHeight = getMinHeight(world);
         int maxHeight = world.getMaxHeight();
 
-        Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
-        if (foundBlocks.isEmpty()) {
-            chunkPacketCache.put(key, EMPTY_PACKET);
-            callback.accept(null);
-        } else {
-            byte[] data = buildChunkPacket(foundBlocks);
-            chunkPacketCache.put(key, data);
-            callback.accept(data);
-        }
+        plugin.chunkExecutor.submit(() -> {
+            try {
+                byte[] cached = chunkPacketCache.getIfPresent(key);
+                if (cached != null) {
+                    callback.accept(cached.length > 0 ? cached : null);
+                    return;
+                }
+                Map<Integer, List<Long>> foundBlocks = findModernBlocksInChunk(snapshot, minHeight, maxHeight);
+                if (foundBlocks.isEmpty()) {
+                    chunkPacketCache.put(key, EMPTY_PACKET);
+                    callback.accept(null);
+                } else {
+                    byte[] data = buildChunkPacket(foundBlocks);
+                    chunkPacketCache.put(key, data);
+                    callback.accept(data);
+                }
+            } catch (Exception e) {
+                callback.accept(null);
+            }
+        });
     }
 
     private Map<Integer, List<Long>> findModernBlocksInChunk(ChunkSnapshot chunkSnapshot, int minHeight, int maxHeight) {
@@ -273,7 +290,12 @@ public class CustomBlockListener {
 
                     if (materialId != -1) {
                         long packedLocation = packLocation(chunkX + x, y, chunkZ + z);
-                        foundBlocks.computeIfAbsent(materialId, k -> new ArrayList<>()).add(packedLocation);
+                        List<Long> locs = foundBlocks.get(materialId);
+                        if (locs == null) {
+                            locs = new ArrayList<>();
+                            foundBlocks.put(materialId, locs);
+                        }
+                        locs.add(packedLocation);
                     }
                 }
             }
@@ -287,7 +309,12 @@ public class CustomBlockListener {
         for (long packedLoc : locations) {
             Integer cachedId = recentModernChanges.getIfPresent(packedLoc);
             if (cachedId != null) {
-                foundBlocks.computeIfAbsent(cachedId, k -> new ArrayList<>()).add(packedLoc);
+                List<Long> locs = foundBlocks.get(cachedId);
+                if (locs == null) {
+                    locs = new ArrayList<>();
+                    foundBlocks.put(cachedId, locs);
+                }
+                locs.add(packedLoc);
                 continue;
             }
 
@@ -303,7 +330,12 @@ public class CustomBlockListener {
             if (isModernMaterial(data.getMaterial())) {
                 int id = getMaterialId(data);
                 if (id != -1) {
-                    foundBlocks.computeIfAbsent(id, k -> new ArrayList<>()).add(packedLoc);
+                    List<Long> locs2 = foundBlocks.get(id);
+                    if (locs2 == null) {
+                        locs2 = new ArrayList<>();
+                        foundBlocks.put(id, locs2);
+                    }
+                    locs2.add(packedLoc);
                 }
             }
         }
@@ -514,8 +546,17 @@ public class CustomBlockListener {
             return;
         }
         UUID playerId = player.getUniqueId();
-        Map<Integer, List<Long>> updateData = pendingUpdates.computeIfAbsent(playerId, k -> new HashMap<>());
-        updateData.computeIfAbsent(stateId, k -> new ArrayList<>()).add(packLocation(location));
+        Map<Integer, List<Long>> updateData = pendingUpdates.get(playerId);
+        if (updateData == null) {
+            updateData = new HashMap<>();
+            pendingUpdates.put(playerId, updateData);
+        }
+        List<Long> stateList = updateData.get(stateId);
+        if (stateList == null) {
+            stateList = new ArrayList<>();
+            updateData.put(stateId, stateList);
+        }
+        stateList.add(packLocation(location));
         if (pendingFlush.add(playerId)) {
             runSyncLater(() -> flushPendingUpdates(playerId), plugin.getUpdateBatchDelayTicks());
         }

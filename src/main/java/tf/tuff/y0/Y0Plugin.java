@@ -40,6 +40,7 @@ public class Y0Plugin {
     private final ObjectOpenHashSet<UUID> aib = new ObjectOpenHashSet<>();
     private ObjectOpenHashSet<String> ew;
     private volatile Cache<WCK, ObjectArrayList<byte[]>> cc;
+    private volatile Cache<WCK, byte[]> ccCombined;
     private boolean d;
     private volatile ExecutorService cp;
 
@@ -47,6 +48,7 @@ public class Y0Plugin {
     private final ThreadLocal<ShortArrayList> tlba = ThreadLocal.withInitial(() -> new ShortArrayList(4096));
     private final ThreadLocal<ByteArrayList> tlla = ThreadLocal.withInitial(() -> new ByteArrayList(4096));
     private final ThreadLocal<ByteArrayOutputStream> tlos = ThreadLocal.withInitial(() -> new ByteArrayOutputStream(8256));
+    private final ThreadLocal<byte[]> tlbd = ThreadLocal.withInitial(() -> new byte[12288]);
 
     private TuffX plugin;
     
@@ -112,13 +114,25 @@ public class Y0Plugin {
         if (cc != null) {
             cc.invalidateAll();
         }
+        if (ccCombined != null) {
+            ccCombined.invalidateAll();
+        }
+        int cacheSize = plugin.getConfig().getInt("y0.cache-size", 1024);
+        int cacheExp = plugin.getConfig().getInt("y0.cache-expiration", 5);
+        int concLevel = Runtime.getRuntime().availableProcessors();
         cc = CacheBuilder.newBuilder()
-            .maximumSize(plugin.getConfig().getInt("y0.cache-size", 1024))
-            .expireAfterAccess(plugin.getConfig().getInt("y0.cache-expiration", 5), TimeUnit.MINUTES)
-            .concurrencyLevel(Runtime.getRuntime().availableProcessors())
+            .maximumSize(cacheSize)
+            .expireAfterAccess(cacheExp, TimeUnit.MINUTES)
+            .concurrencyLevel(concLevel)
             .initialCapacity(256)
             .build();
-            
+        ccCombined = CacheBuilder.newBuilder()
+            .maximumSize(cacheSize)
+            .expireAfterAccess(cacheExp, TimeUnit.MINUTES)
+            .concurrencyLevel(concLevel)
+            .initialCapacity(256)
+            .build();
+
         if (cp != null) {
             cp.shutdown();
             try {
@@ -162,10 +176,19 @@ public class Y0Plugin {
 
         this.cpl = new ChunkPacketListener(this);
 
+        int cacheSize2 = plugin.getConfig().getInt("y0.cache-size", 1024);
+        int cacheExp2 = plugin.getConfig().getInt("y0.cache-expiration", 5);
+        int concLevel2 = Runtime.getRuntime().availableProcessors();
         cc = CacheBuilder.newBuilder()
-            .maximumSize(plugin.getConfig().getInt("y0.cache-size", 1024))
-            .expireAfterAccess(plugin.getConfig().getInt("y0.cache-expiration", 5), TimeUnit.MINUTES)
-            .concurrencyLevel(Runtime.getRuntime().availableProcessors())
+            .maximumSize(cacheSize2)
+            .expireAfterAccess(cacheExp2, TimeUnit.MINUTES)
+            .concurrencyLevel(concLevel2)
+            .initialCapacity(256)
+            .build();
+        ccCombined = CacheBuilder.newBuilder()
+            .maximumSize(cacheSize2)
+            .expireAfterAccess(cacheExp2, TimeUnit.MINUTES)
+            .concurrencyLevel(concLevel2)
             .initialCapacity(256)
             .build();
 
@@ -214,6 +237,10 @@ public class Y0Plugin {
         if (cc != null) {
             cc.invalidateAll();
             cc = null;
+        }
+        if (ccCombined != null) {
+            ccCombined.invalidateAll();
+            ccCombined = null;
         }
 
         aib.clear();
@@ -308,6 +335,7 @@ public class Y0Plugin {
                             }
 
                             cc.put(k, pp);
+                            storeCombined(k, pp);
                         } catch (Exception e) {
                         }
                     }
@@ -445,6 +473,7 @@ public class Y0Plugin {
                 }
             }
             this.cc.put(k, pp);
+            storeCombined(k, pp);
             if (!pp.isEmpty()) {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (p.isOnline()) {
@@ -460,6 +489,7 @@ public class Y0Plugin {
     private void icc(World w, int x, int z) {
         WCK k = new WCK(w.getName(), x >> 4, z >> 4);
         cc.invalidate(k);
+        ccCombined.invalidate(k);
     }
 
     public byte[] getY0DataForChunk(Player p, int chunkX, int chunkZ) {
@@ -468,22 +498,41 @@ public class Y0Plugin {
         if (ew == null || !ew.contains(world.getName())) return null;
 
         WCK k = new WCK(world.getName(), chunkX, chunkZ);
-        ObjectArrayList<byte[]> cachedData = cc.getIfPresent(k);
 
+        byte[] combined = ccCombined.getIfPresent(k);
+        if (combined != null) return combined.length > 0 ? combined : null;
+
+        ObjectArrayList<byte[]> cachedData = cc.getIfPresent(k);
         if (cachedData != null) {
-            if (cachedData.isEmpty()) return null;
-            try {
-                ByteArrayOutputStream combined = new ByteArrayOutputStream();
-                for (byte[] section : cachedData) {
-                    combined.write(section);
-                }
-                return combined.toByteArray();
-            } catch (IOException e) {
-                return null;
-            }
+            byte[] cb = buildCombined(cachedData);
+            if (cb != null) ccCombined.put(k, cb);
+            return cb;
         }
 
         return null;
+    }
+
+    private byte[] buildCombined(ObjectArrayList<byte[]> sections) {
+        if (sections.isEmpty()) return null;
+        int totalLen = 0;
+        for (int i = 0, l = sections.size(); i < l; i++) {
+            totalLen += sections.get(i).length;
+        }
+        byte[] result = new byte[totalLen];
+        int offset = 0;
+        for (int i = 0, l = sections.size(); i < l; i++) {
+            byte[] s = sections.get(i);
+            System.arraycopy(s, 0, result, offset, s.length);
+            offset += s.length;
+        }
+        return result;
+    }
+
+    private void storeCombined(WCK k, ObjectArrayList<byte[]> sections) {
+        byte[] cb = buildCombined(sections);
+        if (cb != null) {
+            ccCombined.put(k, cb);
+        }
     }
 
     public void preCacheY0Data(Player p, int chunkX, int chunkZ) {
@@ -496,22 +545,31 @@ public class Y0Plugin {
 
         if (!world.isChunkLoaded(chunkX, chunkZ)) return;
 
-        try {
-            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-            ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
-            ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
-            Object2ObjectOpenHashMap<BlockData, int[]> cvt = new Object2ObjectOpenHashMap<>(256);
+        Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+        ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
 
-            for (int sy = -4; sy < 0; sy++) {
-                byte[] sectionData = csp(snapshot, chunkX, chunkZ, sy, cvt);
-                if (sectionData != null) {
-                    pp.add(sectionData);
+        ExecutorService executor = cp;
+        if (executor == null || executor.isShutdown()) return;
+
+        executor.submit(() -> {
+            try {
+                if (cc.getIfPresent(k) != null) return;
+                Object2ObjectOpenHashMap<BlockData, int[]> cvt = tlcc.get();
+                cvt.clear();
+                ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
+
+                for (int sy = -4; sy < 0; sy++) {
+                    byte[] sectionData = csp(snapshot, chunkX, chunkZ, sy, cvt);
+                    if (sectionData != null) {
+                        pp.add(sectionData);
+                    }
                 }
-            }
 
-            cc.put(k, pp);
-        } catch (Exception e) {
-        }
+                cc.put(k, pp);
+                storeCombined(k, pp);
+            } catch (Exception e) {
+            }
+        });
     }
 
     public void cacheChunkWithCallback(Player p, int chunkX, int chunkZ, Consumer<byte[]> callback) {
@@ -526,21 +584,18 @@ public class Y0Plugin {
         }
 
         WCK k = new WCK(world.getName(), chunkX, chunkZ);
+
+        byte[] combined = ccCombined.getIfPresent(k);
+        if (combined != null) {
+            callback.accept(combined.length > 0 ? combined : null);
+            return;
+        }
+
         ObjectArrayList<byte[]> existing = cc.getIfPresent(k);
         if (existing != null) {
-            if (existing.isEmpty()) {
-                callback.accept(null);
-            } else {
-                try {
-                    ByteArrayOutputStream combined = new ByteArrayOutputStream();
-                    for (byte[] section : existing) {
-                        combined.write(section);
-                    }
-                    callback.accept(combined.toByteArray());
-                } catch (IOException e) {
-                    callback.accept(null);
-                }
-            }
+            byte[] cb = buildCombined(existing);
+            if (cb != null) ccCombined.put(k, cb);
+            callback.accept(cb);
             return;
         }
 
@@ -549,33 +604,41 @@ public class Y0Plugin {
             return;
         }
 
-        try {
-            Chunk chunk = world.getChunkAt(chunkX, chunkZ);
-            ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
-            ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
-            Object2ObjectOpenHashMap<BlockData, int[]> cvt = new Object2ObjectOpenHashMap<>(256);
+        Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+        ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
 
-            for (int sy = -4; sy < 0; sy++) {
-                byte[] sectionData = csp(snapshot, chunkX, chunkZ, sy, cvt);
-                if (sectionData != null) {
-                    pp.add(sectionData);
-                }
-            }
-
-            cc.put(k, pp);
-
-            if (pp.isEmpty()) {
-                callback.accept(null);
-            } else {
-                ByteArrayOutputStream combined = new ByteArrayOutputStream();
-                for (byte[] section : pp) {
-                    combined.write(section);
-                }
-                callback.accept(combined.toByteArray());
-            }
-        } catch (Exception e) {
+        ExecutorService executor = cp;
+        if (executor == null || executor.isShutdown()) {
             callback.accept(null);
+            return;
         }
+
+        executor.submit(() -> {
+            try {
+                byte[] cached = ccCombined.getIfPresent(k);
+                if (cached != null) {
+                    callback.accept(cached.length > 0 ? cached : null);
+                    return;
+                }
+                Object2ObjectOpenHashMap<BlockData, int[]> cvt = tlcc.get();
+                cvt.clear();
+                ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
+
+                for (int sy = -4; sy < 0; sy++) {
+                    byte[] sectionData = csp(snapshot, chunkX, chunkZ, sy, cvt);
+                    if (sectionData != null) {
+                        pp.add(sectionData);
+                    }
+                }
+
+                cc.put(k, pp);
+                byte[] cb = buildCombined(pp);
+                if (cb != null) ccCombined.put(k, cb);
+                callback.accept(cb);
+            } catch (Exception e) {
+                callback.accept(null);
+            }
+        });
     }
     
     private void cp(UUID id) {
@@ -599,31 +662,35 @@ public class Y0Plugin {
         WCK k = new WCK(e.getWorld().getName(), chunkX, chunkZ);
         if (cc.getIfPresent(k) != null) return;
 
-        try {
-            ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
-            ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
-            Object2ObjectOpenHashMap<BlockData, int[]> cvt = new Object2ObjectOpenHashMap<>(256);
+        ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
 
-            for (int sy = -4; sy < 0; sy++) {
-                byte[] sectionData = csp(snapshot, chunkX, chunkZ, sy, cvt);
-                if (sectionData != null) {
-                    pp.add(sectionData);
+        ExecutorService executor = cp;
+        if (executor == null || executor.isShutdown()) return;
+
+        executor.submit(() -> {
+            try {
+                if (cc.getIfPresent(k) != null) return;
+                Object2ObjectOpenHashMap<BlockData, int[]> cvt = tlcc.get();
+                cvt.clear();
+                ObjectArrayList<byte[]> pp = new ObjectArrayList<>(4);
+
+                for (int sy = -4; sy < 0; sy++) {
+                    byte[] sectionData = csp(snapshot, chunkX, chunkZ, sy, cvt);
+                    if (sectionData != null) {
+                        pp.add(sectionData);
+                    }
                 }
-            }
 
-            cc.put(k, pp);
-        } catch (Exception ex) {
-        }
+                cc.put(k, pp);
+                storeCombined(k, pp);
+            } catch (Exception ex) {
+            }
+        });
     }
 
     private byte[] csp(ChunkSnapshot s, int x, int z, int sy, Object2ObjectOpenHashMap<BlockData, int[]> c) throws IOException {
-        ShortArrayList ba = tlba.get();
-        ByteArrayList la = tlla.get();
-        ba.clear();
-        la.clear();
-        ba.ensureCapacity(4096);
-        la.ensureCapacity(4096);
-        
+        byte[] bd = tlbd.get();
+        int idx = 0;
         boolean h = false;
         int by = sy << 4;
 
@@ -631,18 +698,19 @@ public class Y0Plugin {
             int wy = by + y;
             for (int zz = 0; zz < 16; zz++) {
                 for (int xx = 0; xx < 16; xx++) {
-                    BlockData bd = s.getBlockData(xx, wy, zz);
-                    int[] ld = c.getOrDefault(bd, EMPTY_LEGACY);
+                    BlockData bdata = s.getBlockData(xx, wy, zz);
+                    int[] ld = c.getOrDefault(bdata, EMPTY_LEGACY);
                     if (ld == EMPTY_LEGACY && v != null) {
-                        ld = v.toLegacy(bd);
-                        c.put(bd, ld);
+                        ld = v.toLegacy(bdata);
+                        c.put(bdata, ld);
                     }
-                    
+
                     short lb = (short) ((ld[1] << 12) | (ld[0] & 0xFFF));
                     byte pl = (byte) ((s.getBlockSkyLight(xx, wy, zz) << 4) | s.getBlockEmittedLight(xx, wy, zz));
 
-                    ba.add(lb);
-                    la.add(pl);
+                    bd[idx++] = (byte) (lb >> 8);
+                    bd[idx++] = (byte) lb;
+                    bd[idx++] = pl;
 
                     if (lb != 0 || pl != 0) {
                         h = true;
@@ -656,19 +724,14 @@ public class Y0Plugin {
         }
 
         ByteArrayOutputStream b = tlos.get();
-        b.reset(); 
-        
+        b.reset();
+
         try (DataOutputStream o = new DataOutputStream(b)) {
             o.writeUTF("chunk_data");
             o.writeInt(x);
             o.writeInt(z);
             o.writeInt(sy);
-
-            int sz = ba.size();
-            for (int j = 0; j < sz; j++) {
-                o.writeShort(ba.getShort(j));
-                o.writeByte(la.getByte(j));
-            }
+            o.write(bd, 0, idx);
             return b.toByteArray();
         }
     }

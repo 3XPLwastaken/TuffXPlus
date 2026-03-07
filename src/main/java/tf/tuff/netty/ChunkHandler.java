@@ -24,7 +24,7 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
     private final Map<Long, QueuedPacket> queue = new ConcurrentHashMap<>();
     private volatile ChannelHandlerContext ctx;
 
-    private static final long TIMEOUT_MS = 200;
+    private static final long TIMEOUT_MS = 500;
 
     public ChunkHandler(CustomBlockListener viaBlocks, Y0Plugin y0, Player player) {
         this.viaBlocks = viaBlocks;
