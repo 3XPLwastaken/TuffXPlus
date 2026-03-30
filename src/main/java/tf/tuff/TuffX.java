@@ -1,63 +1,34 @@
 package tf.tuff;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import org.bukkit.command.Command;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
-import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.command.CommandSender;
-import org.bukkit.event.block.BlockGrowEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.block.BlockFadeEvent;
-import org.bukkit.event.block.BlockFormEvent;
-import org.bukkit.event.block.BlockSpreadEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.EntityToggleSwimEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.messaging.PluginMessageListener;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.PluginMessageListener;
 
-import java.util.concurrent.*;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import com.google.common.cache.*;
-import java.util.logging.Level;
-import java.lang.reflect.Method; 
-import it.unimi.dsi.fastutil.objects.*;
-import it.unimi.dsi.fastutil.shorts.*;
-import it.unimi.dsi.fastutil.bytes.*;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 
-import tf.tuff.y0.Y0Plugin;
-import tf.tuff.viablocks.ViaBlocksPlugin;
-import tf.tuff.tuffactions.TuffActions;
-import tf.tuff.viasounds.ViaSoundsPlugin;
-import tf.tuff.viaentities.ViaEntitiesPlugin;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import tf.tuff.netty.ChunkInjector;
+import tf.tuff.tuffactions.TuffActions;
+import tf.tuff.viablocks.ViaBlocksPlugin;
+import tf.tuff.viaentities.ViaEntitiesPlugin;
+import tf.tuff.viasounds.ViaSoundsPlugin;
+import tf.tuff.y0.Y0Plugin;
 
-public class TuffX extends JavaPlugin implements Listener, PluginMessageListener, CommandExecutor {
+public class TuffX extends JavaPlugin implements Listener, PluginMessageListener {
 
     public ServerRegistry serverRegistry;
 
@@ -85,8 +56,7 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().getSettings().reEncodeByDefault(false)
-                .checkForUpdates(false)
-                .bStats(true);
+                .checkForUpdates(false);
         PacketEvents.getAPI().load();
     }
 
@@ -195,14 +165,11 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         if (!player.isOnline()) return;
 
         if (channel.equals("eagler:below_y0")) y0Plugin.handlePacket(player,message);
-
-        if (channel.equals("viablocks:handshake")) viaBlocksPlugin.handlePacket(player,message);
-
-        if (channel.equals("eagler:tuffactions")) tuffActions.handlePacket(player,message);
-
-        if (channel.equals("viasounds:handshake")) viaSoundsPlugin.handlePacket(player,message);
-
-        if (channel.equals("entities:handshake")) viaEntitiesPlugin.handlePacket(player,message);
+        else if (channel.equals("viablocks:handshake")) viaBlocksPlugin.handlePacket(player,message);
+        else if (channel.equals("eagler:tuffactions")) tuffActions.handlePacket(player,message);
+        else if (channel.equals("viasounds:handshake")) viaSoundsPlugin.handlePacket(player,message);
+        else if (channel.equals("entities:handshake")) viaEntitiesPlugin.handlePacket(player,message);
+        else getLogger().warning("Received plugin message on unknown channel '%s' from %s".formatted(channel, player.getName()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -259,10 +226,10 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         viaBlocksPlugin.blockListener.handleBlockBreak(e);
         y0Plugin.handleBlockBreak(e);
     }
-    
+
     @EventHandler
     public void onPlayerInventoryClick(InventoryClickEvent e) {
-     tuffActions.handlePlayerInventoryClick(e);
+        tuffActions.handlePlayerInventoryClick(e);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

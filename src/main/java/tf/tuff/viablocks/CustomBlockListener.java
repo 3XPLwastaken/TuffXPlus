@@ -1,39 +1,10 @@
 package tf.tuff.viablocks;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
-import tf.tuff.viablocks.version.VersionAdapter;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.block.BlockFadeEvent;
-import org.bukkit.event.block.BlockFormEvent;
-import org.bukkit.event.block.BlockFromToEvent;
-import org.bukkit.event.block.BlockGrowEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.BlockSpreadEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.block.data.BlockData;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +12,28 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
+
+import org.bukkit.Chunk;
+import org.bukkit.ChunkSnapshot;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.*;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+
+import tf.tuff.viablocks.version.VersionAdapter;
 
 public class CustomBlockListener {
 
@@ -59,7 +52,7 @@ public class CustomBlockListener {
     private final Map<UUID, Map<Integer, List<Long>>> pendingUpdates = new HashMap<>();
     private final Set<UUID> pendingFlush = new HashSet<>();
     private static final double UPDATE_RADIUS_SQUARED = 6400;
-    private static final byte[] EMPTY_PACKET = new byte[0];
+    private static final @Nonnull byte[] EMPTY_PACKET = new byte[0];
     
     private final Cache<BlockData, Integer> blockDataIdCache;
     private final Cache<String, byte[]> chunkPacketCache;
@@ -93,7 +86,7 @@ public class CustomBlockListener {
         this.chunkInjector = injector;
     }
 
-    private String chunkKey(String worldName, int x, int z) {
+    private @Nonnull String chunkKey(String worldName, int x, int z) {
         return worldName + "_" + x + "_" + z;
     }
 
@@ -208,8 +201,7 @@ public class CustomBlockListener {
                 } else {
                     chunkPacketCache.put(key, buildChunkPacket(foundBlocks));
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         });
     }
 
@@ -254,7 +246,8 @@ public class CustomBlockListener {
                     chunkPacketCache.put(key, EMPTY_PACKET);
                     callback.accept(null);
                 } else {
-                    byte[] data = buildChunkPacket(foundBlocks);
+                    @SuppressWarnings("null")
+                    @Nonnull byte[] data = buildChunkPacket(foundBlocks);
                     chunkPacketCache.put(key, data);
                     callback.accept(data);
                 }
@@ -277,7 +270,8 @@ public class CustomBlockListener {
                         continue;
                     }
                     
-                    BlockData data = chunkSnapshot.getBlockData(x, y, z);
+                    @SuppressWarnings("null")
+                    @Nonnull BlockData data = chunkSnapshot.getBlockData(x, y, z);
                     
                     Integer cachedId = blockDataIdCache.getIfPresent(data);
                     int materialId;
@@ -388,9 +382,9 @@ public class CustomBlockListener {
 
         handleModernBlockChange(data, Material.AIR.createBlockData(), loc);
 
-        if (data instanceof org.bukkit.block.data.type.Door) {
-            org.bukkit.block.data.type.Door door = (org.bukkit.block.data.type.Door) data;
-            Location otherHalf = door.getHalf() == org.bukkit.block.data.Bisected.Half.BOTTOM
+        if (data instanceof Door) {
+            Door door = (Door) data;
+            Location otherHalf = door.getHalf() == Bisected.Half.BOTTOM
                 ? loc.clone().add(0, 1, 0)
                 : loc.clone().add(0, -1, 0);
             long otherPacked = packLocation(otherHalf);
@@ -468,7 +462,7 @@ public class CustomBlockListener {
     }
 
     private void handleModernBlockChange(BlockData before, BlockData after, Location location) {
-        if (!isFeatureEnabled() || location == null) return;
+        if (!plugin.isEnabled() || location == null) return;
 
         boolean afterModern = after != null && isModernMaterial(after.getMaterial());
         boolean beforeModern = before != null && isModernMaterial(before.getMaterial());
@@ -492,14 +486,8 @@ public class CustomBlockListener {
         return recentModernChanges.getIfPresent(packed);
     }
 
-    private boolean isFeatureEnabled() {
-        return plugin.plugin.getConfig().getBoolean("viablocks.viablocks-enabled", false);
-    }
-
     private void sendBlockStateUpdateToNearbyPlayers(Location location, BlockData data) {
-        if (data == null || location.getWorld() == null) {
-            return;
-        }
+        if (!plugin.isEnabled() || data == null || location.getWorld() == null) return;
         Integer cachedId = blockDataIdCache.getIfPresent(data);
         int stateId;
         if (cachedId != null) {
@@ -508,9 +496,7 @@ public class CustomBlockListener {
             stateId = this.paletteManager.getOrCreateId(data.getAsString());
             blockDataIdCache.put(data, stateId);
         }
-        if (stateId == -1) {
-            return;
-        }
+        if (stateId == -1) return;
 
         World world = location.getWorld();
         for (Player player : world.getPlayers()) {
@@ -521,9 +507,7 @@ public class CustomBlockListener {
     }
 
     private void sendClearUpdateToNearbyPlayers(Location location) {
-        if (!isFeatureEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location.getWorld() == null) {
-            return;
-        }
+        if (!plugin.isEnabled() || plugin.viaBlocksEnabledPlayers.isEmpty() || location.getWorld() == null) return;
         final int AIR_ID = 0;
         World world = location.getWorld();
         
@@ -535,16 +519,12 @@ public class CustomBlockListener {
     }
 
     private void invalidateChunkCache(Chunk chunk) {
-        if (chunk == null) {
-            return;
-        }
+        if (chunk == null) return;
         chunkPacketCache.invalidate(chunkKey(chunk.getWorld().getName(), chunk.getX(), chunk.getZ()));
     }
 
     private void sendPacket(Player player, int stateId, Location location) {
-        if (!player.isOnline()) {
-            return;
-        }
+        if (!player.isOnline()) return;
         UUID playerId = player.getUniqueId();
         Map<Integer, List<Long>> updateData = pendingUpdates.get(playerId);
         if (updateData == null) {
@@ -565,22 +545,20 @@ public class CustomBlockListener {
     private void flushPendingUpdates(UUID playerId) {
         Map<Integer, List<Long>> updateData = pendingUpdates.remove(playerId);
         pendingFlush.remove(playerId);
-        if (updateData == null || updateData.isEmpty()) {
-            return;
-        }
+        if (updateData == null || updateData.isEmpty()) return;
+
         Player player = plugin.plugin.getServer().getPlayer(playerId);
-        if (player == null || !player.isOnline()) {
-            return;
-        }
+        if (player == null || !player.isOnline()) return;
+
         byte[] packetData = buildChunkPacket(updateData);
         player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, packetData);
     }
 
     private int getMaterialId(BlockData data) {
+        @SuppressWarnings("null")
         Integer cachedId = blockDataIdCache.getIfPresent(data);
-        if (cachedId != null) {
-            return cachedId;
-        }
+        if (cachedId != null) return cachedId;
+
         int id = this.paletteManager.getOrCreateId(data.getAsString());
         blockDataIdCache.put(data, id);
         return id;
@@ -631,25 +609,12 @@ public class CustomBlockListener {
         chunkPacketCache.invalidateAll();
         recentModernChanges.invalidateAll();
     }
-    
-    private void runSync(Runnable task) { 
-        if (!plugin.plugin.isEnabled()) return;
-        try {
-            if (Bukkit.isPrimaryThread()) {
-                task.run();
-            } else {
-                plugin.plugin.getServer().getScheduler().runTask(plugin.plugin, task); 
-            }
-        } catch (Exception e) {
-        }
-    }
 
     private void runSyncLater(Runnable task, long delay) { 
         if (!plugin.plugin.isEnabled()) return;
         try {
             plugin.plugin.getServer().getScheduler().runTaskLater(plugin.plugin, task, delay); 
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
     }
 
     private int getMinHeight(World world) {
@@ -660,8 +625,7 @@ public class CustomBlockListener {
                 if (value instanceof Integer) {
                     return (Integer) value;
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
             return 0;
         });
     }

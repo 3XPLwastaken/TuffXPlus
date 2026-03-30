@@ -1,13 +1,17 @@
 package tf.tuff.viablocks;
 
-import tf.tuff.viablocks.version.VersionAdapter;
-import tf.tuff.viablocks.version.legacy.LegacyAdapter;
-import tf.tuff.viablocks.version.modern.ModernAdapter;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.ChatColor;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -18,18 +22,17 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
-import tf.tuff.TuffX;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+
+import tf.tuff.viablocks.version.VersionAdapter;
+import tf.tuff.viablocks.version.legacy.LegacyAdapter;
+import tf.tuff.viablocks.version.modern.ModernAdapter;
+import tf.tuff.TuffX;
 
 public final class ViaBlocksPlugin {
 
@@ -43,28 +46,28 @@ public final class ViaBlocksPlugin {
     private File playerDataFile;
     private FileConfiguration playerDataConfig;
     private final Set<UUID> joinedPlayersCache = new HashSet<>();
+
+    private boolean enabled;
+    private boolean debug;
     private boolean sendWelcomeBook;
+
     public VersionAdapter versionAdapter;
 
     public PaletteManager paletteManager;
     private long updateBatchDelayTicks = 1L;
-
     public ExecutorService chunkExecutor;
-
     public boolean isPaper = false;
-    
+
     public TuffX plugin;
-    
+
     public ViaBlocksPlugin(TuffX plugin){
-         this.plugin = plugin;
+        this.plugin = plugin;
     }   
 
     public void onTuffXLoad() {
     }
-    
+
     public void onTuffXReload() {
-        this.sendWelcomeBook = plugin.getConfig().getBoolean("viablocks.send-welcome-book", true);
-        
         loadSyncSettings();
 
         if (chunkExecutor != null) {
@@ -81,7 +84,7 @@ public final class ViaBlocksPlugin {
             blockListener.clearCache();
         }
         
-        plugin.getLogger().info("ViaBlocks reloaded.");
+        info("ViaBlocks reloaded.");
     }
 
     public void onTuffXEnable() {
@@ -90,26 +93,24 @@ public final class ViaBlocksPlugin {
         this.chunkExecutor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors()));
 
         if (!setupVersionAdapter()) {
-            plugin.getLogger().severe("Could not detect server version. This plugin may not work correctly.");
+            severe("Could not detect server version. This plugin may not work correctly.");
             this.versionAdapter = new LegacyAdapter();
         }
 
-        this.paletteManager = new PaletteManager(this.versionAdapter, plugin.getLogger());
+        this.paletteManager = new PaletteManager(this.versionAdapter);
 
         try {
             Class.forName("io.papermc.paper.threadedregions.scheduler.AsyncScheduler");
             this.isPaper = true;
-            plugin.getLogger().info("Paper detected. Enabling optimized asynchronous scheduling.");
+            info("Paper detected. Enabling optimized asynchronous scheduling.");
         } catch (ClassNotFoundException e) {
             this.isPaper = false;
-            plugin.getLogger().info("Running on Spigot/Bukkit. Using standard scheduler.");
+            info("Running on Spigot/Bukkit. Using standard scheduler.");
         }
 
         plugin.saveDefaultConfig();
-        this.sendWelcomeBook = plugin.getConfig().getBoolean("viablocks.send-welcome-book", true);
         loadSyncSettings();
         setupPlayerData();
-
            
 
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CLIENTBOUND_CHANNEL);
@@ -118,16 +119,16 @@ public final class ViaBlocksPlugin {
         this.blockListener = new CustomBlockListener(this, this.versionAdapter, this.paletteManager);
 
         plugin.getCommand("viablocks").setExecutor(plugin);
-        plugin.getLogger().info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
+        info("ViaBlocks has been enabled successfully and is listening for client handshakes.");
     }
 
     public void handlePacket(Player player, byte[] message) {
-            if (!isPlayerEnabled(player)) {
-                plugin.getLogger().info("Received ViaBlocks handshake from player: " + player.getName() + ". Enabling custom blocks.");
-                setPlayerEnabled(player, true);
+        if (!isPlayerEnabled(player) && isEnabled()) {
+            debug("Received ViaBlocks handshake from player: " + player.getName() + ". Enabling custom blocks.");
+            setPlayerEnabled(player, true);
 
-                blockListener.onViaBlocksPlayerJoin(player);
-            }
+            blockListener.onViaBlocksPlayerJoin(player);
+        }
     }
 
     public PaletteManager getPaletteManager() {
@@ -139,6 +140,10 @@ public final class ViaBlocksPlugin {
     }
 
     private void loadSyncSettings() {
+        enabled = plugin.getConfig().getBoolean("viablocks.viablocks-enabled", false);
+        debug = plugin.getConfig().getBoolean("viablocks.debug", false);
+        sendWelcomeBook = plugin.getConfig().getBoolean("viablocks.send-welcome-book", true);
+
         String mode = plugin.getConfig().getString("viablocks.sync-mode", "normal");
         if (mode == null) {
             mode = "normal";
@@ -174,7 +179,7 @@ public final class ViaBlocksPlugin {
             chunkExecutor = null;
         }
 
-        plugin.getLogger().info("ViaBlocks has been disabled.");
+        info("ViaBlocks has been disabled.");
     }
     private void setupPlayerData() {
         playerDataFile = new File(plugin.getDataFolder(), "players.yml");
@@ -182,7 +187,7 @@ public final class ViaBlocksPlugin {
             try {
                 playerDataFile.createNewFile();
             } catch (IOException e) {
-                plugin.getLogger().severe("Could not create players.yml!");
+                severe("Could not create players.yml!");
                 e.printStackTrace();
             }
         }
@@ -210,7 +215,7 @@ public final class ViaBlocksPlugin {
             try {
                 playerDataConfig.save(playerDataFile);
             } catch (IOException e) {
-                plugin.getLogger().severe("Could not save to players.yml!");
+                severe("Could not save to players.yml!");
                 e.printStackTrace();
             }
         }
@@ -238,7 +243,11 @@ public final class ViaBlocksPlugin {
         meta.spigot().addPage(new ComponentBuilder("").append(welcome).append(body).append(link).append(new TextComponent(".")).append(disclaimer).create());
         book.setItemMeta(meta);
         plugin.getServer().getScheduler().runTask(plugin, () -> player.openBook(book));
-    }   
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
     
     public boolean isPlayerEnabled(Player player) {
         if (player == null) return false;
@@ -246,7 +255,7 @@ public final class ViaBlocksPlugin {
     }
 
     public void setPlayerEnabled(Player player, boolean enabled) {
-        if (enabled && plugin.getConfig().getBoolean("viablocks.viablocks-enabled", false)) {
+        if (enabled && isEnabled()) {
             viaBlocksEnabledPlayers.add(player.getUniqueId());
         } else {
             viaBlocksEnabledPlayers.remove(player.getUniqueId());
@@ -298,5 +307,24 @@ public final class ViaBlocksPlugin {
         player.sendMessage("\u00A7cInvalid usage. Use: /viablocks <get|refresh>");
         return true;
     }
-}
 
+    public boolean isDebug() {
+        return debug;
+    }
+    public void debug(String message) {
+        if (isDebug()) info(message);
+    }
+
+    public void log(Level level, String msg, Throwable e) {
+        plugin.getLogger().log(level, "[ViaBlocks] "+msg, e);
+    }
+    public void log(Level level, String msg) {
+        plugin.getLogger().log(level, "[ViaBlocks] "+msg);
+    }
+    public void info(String msg) {
+        log(Level.INFO, msg);
+    }
+    public void severe(String msg) {
+        log(Level.SEVERE, msg);
+    }
+}

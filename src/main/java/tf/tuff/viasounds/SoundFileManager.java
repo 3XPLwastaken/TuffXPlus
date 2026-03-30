@@ -1,8 +1,14 @@
 package tf.tuff.viasounds;
 
-import java.util.*;
-import java.io.*;
-import com.fasterxml.jackson.databind.*;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class SoundFileManager {
     private final Map<String, List<String>> soundEventToFiles = new HashMap<>();
@@ -15,9 +21,7 @@ public class SoundFileManager {
 
     private void loadSoundsFromJSON() {
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("sound_mappings.json")) {
-            if (is == null) {
-                return;
-            }
+            if (is == null) return;
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(is);
@@ -49,8 +53,7 @@ public class SoundFileManager {
                 }
             }
 
-        } catch (Exception e) {
-        }
+        } catch (Exception e) { ViaSoundsPlugin.instance.debug("Error loading sounds: "+e.getMessage()); }
     }
 
     public String getRandomFilePath(String soundEvent) {

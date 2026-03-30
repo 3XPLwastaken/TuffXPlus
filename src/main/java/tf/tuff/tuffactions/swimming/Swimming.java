@@ -1,21 +1,20 @@
 package tf.tuff.tuffactions.swimming;
 
-import tf.tuff.tuffactions.TuffActions;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.entity.EntityToggleSwimEvent;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.EntityToggleSwimEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+
+import tf.tuff.tuffactions.TuffActions;
 
 public class Swimming {
 
@@ -47,9 +46,7 @@ public class Swimming {
     }
 
     public void handleToggleSwim(EntityToggleSwimEvent event) {
-        if (!(event.getEntity() instanceof Player)) {
-            return;
-        }
+        if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
         if (!event.isSwimming() && swimmingPlayers.contains(player.getUniqueId())) {
             event.setCancelled(true);
@@ -57,9 +54,7 @@ public class Swimming {
     }
 
     public void handleToggleGlide(EntityToggleGlideEvent event) {
-        if (!(event.getEntity() instanceof Player)) {
-            return;
-        }
+        if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
         if (!event.isGliding() && glidingPlayers.contains(player.getUniqueId())) {
             event.setCancelled(true);
@@ -76,9 +71,9 @@ public class Swimming {
     }
 
     private void broadcastSwimState(Player subject, boolean isSwimming) {
-        for (UUID otheruuid : TuffActions.tuffPlayers) {
-            if (!otheruuid.equals(subject.getUniqueId())) {
-                Player recipient = Bukkit.getPlayer(otheruuid);
+        for (UUID otherUUID : TuffActions.tuffPlayers) {
+            if (!otherUUID.equals(subject.getUniqueId())) {
+                Player recipient = Bukkit.getPlayer(otherUUID);
                 if (recipient != null && recipient.isOnline()) {
                     sendSwimState(recipient, subject, isSwimming);
                 }
@@ -87,9 +82,7 @@ public class Swimming {
     }
 
     private void sendSwimState(Player recipient, Player subject, boolean isSwimming) {
-        if (recipient == null || !recipient.isOnline()) {
-            return;
-        }
+        if (recipient == null || !recipient.isOnline()) return;
         try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bout)) {
             out.writeUTF("update_other_swim");
 
@@ -99,7 +92,7 @@ public class Swimming {
 
             plugin.sendPluginMessage(recipient, bout.toByteArray());
         } catch (IOException e) {
-            plugin.plugin.getLogger().log(Level.WARNING, "Failed to send swim state to " + recipient.getName(), e);
+            plugin.log(Level.WARNING, "Failed to send swim state to " + recipient.getName(), e);
         }
     }
 

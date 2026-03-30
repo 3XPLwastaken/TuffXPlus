@@ -1,6 +1,17 @@
 package tf.tuff.y0;
 
-import com.github.retrooper.packetevents.PacketEvents;
+import java.io.*;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import javax.annotation.Nonnull;
+
 import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
@@ -9,26 +20,18 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.concurrent.*;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import com.google.common.cache.*;
-import java.util.logging.Level;
-import java.lang.reflect.Method; 
-import it.unimi.dsi.fastutil.objects.*;
-import it.unimi.dsi.fastutil.shorts.*;
-import it.unimi.dsi.fastutil.bytes.*;
-import java.util.function.Consumer;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import tf.tuff.TuffX;
 
@@ -45,8 +48,6 @@ public class Y0Plugin {
     private volatile ExecutorService cp;
 
     private final ThreadLocal<Object2ObjectOpenHashMap<BlockData, int[]>> tlcc = ThreadLocal.withInitial(() -> new Object2ObjectOpenHashMap<>(256));
-    private final ThreadLocal<ShortArrayList> tlba = ThreadLocal.withInitial(() -> new ShortArrayList(4096));
-    private final ThreadLocal<ByteArrayList> tlla = ThreadLocal.withInitial(() -> new ByteArrayList(4096));
     private final ThreadLocal<ByteArrayOutputStream> tlos = ThreadLocal.withInitial(() -> new ByteArrayOutputStream(8256));
     private final ThreadLocal<byte[]> tlbd = ThreadLocal.withInitial(() -> new byte[12288]);
 
@@ -94,14 +95,26 @@ public class Y0Plugin {
         this.plugin = plugin;
     }
     
-    private void ld(String m) {
-        if (d) plugin.getLogger().log(Level.INFO, "[TuffX-Debug] " + m);
+    private void debug(String m) {
+        if (d) plugin.getLogger().info("[Y0-Debug] " + m);
+    }
+
+    public void log(Level level, String msg, Throwable e) {
+        plugin.getLogger().log(level, "[Y0] "+msg, e);
+    }
+    public void log(Level level, String msg) {
+        plugin.getLogger().log(level, "[Y0] "+msg);
+    }
+    public void info(String msg) {
+        log(Level.INFO, msg);
+    }
+    public void severe(String msg) {
+        log(Level.SEVERE, msg);
     }
 
     public record WCK(String w, int x, int z) {}
 
     public void onTuffXLoad() {
-        
     }
     
     public void onTuffXReload() {
@@ -162,7 +175,7 @@ public class Y0Plugin {
 
         emissionCache.clear();
 
-        plugin.getLogger().info("Y0 reloaded.");
+        info("Y0 reloaded.");
     }
 
     public void onTuffXEnable() {
@@ -196,7 +209,6 @@ public class Y0Plugin {
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CH, plugin);
 
         if (v == null) v = new ViaBlockIds(this.plugin);
-        lfe();
 
         int ct = plugin.getConfig().getInt("y0.chunk-processor-threads", -1);
         int tc;
@@ -223,7 +235,7 @@ public class Y0Plugin {
                 if (!cp.awaitTermination(10, TimeUnit.SECONDS)) {
                     cp.shutdownNow();
                     if (!cp.awaitTermination(5, TimeUnit.SECONDS)) {
-                        plugin.getLogger().severe("Failed to shutdown chunk processor pool!");
+                        severe("Failed to shutdown chunk processor pool!");
                     }
                 }
             } catch (InterruptedException e) {
@@ -270,7 +282,7 @@ public class Y0Plugin {
             String a = new String(ab, StandardCharsets.UTF_8);
             hip(p, new Location(p.getWorld(), x, y, z), a);
         } catch (IOException e) {
-            plugin.getLogger().warning("Failed to parse plugin message from " + p.getName() + ": " + e.getMessage());
+            log(Level.WARNING, "Failed to parse plugin message from " + p.getName() + ": " + e.getMessage());
         }
     }
 
@@ -282,7 +294,7 @@ public class Y0Plugin {
 
         switch (a.toLowerCase()) {
             case "ready2":
-                ld("Player " + p.getName() + " is READY.");
+                debug("Player " + p.getName() + " is READY.");
                 aib.add(p.getUniqueId());
                 if (ew.contains(p.getWorld().getName())) {
                     aib.add(p.getUniqueId());
@@ -336,8 +348,7 @@ public class Y0Plugin {
 
                             cc.put(k, pp);
                             storeCombined(k, pp);
-                        } catch (Exception e) {
-                        }
+                        } catch (Exception e) { debug("Exception while pre-caching visible chunks for player "+p.getName()+": "+e.getMessage()); }
                     }
                 }
             }
@@ -424,13 +435,9 @@ public class Y0Plugin {
     }
 
     public void processAndSendChunk(final Player p, final Chunk c) {
-        if (c == null || p == null || !p.isOnline()) {
-            return;
-        }
+        if (c == null || p == null || !p.isOnline()) return;
 
-        if (ew != null && !ew.contains(c.getWorld().getName())) {
-             return;
-        }
+        if (ew != null && !ew.contains(c.getWorld().getName())) return;
 
         final WCK k = new WCK(c.getWorld().getName(), c.getX(), c.getZ());
         ObjectArrayList<byte[]> cachedData = cc.getIfPresent(k);
@@ -449,9 +456,7 @@ public class Y0Plugin {
 
     private void processSnapshotAsync(final Player p, final ChunkSnapshot snapshot, final int chunkX, final int chunkZ) {
         ExecutorService executor = cp;
-        if (executor == null || executor.isShutdown()) {
-            return;
-        }
+        if (executor == null || executor.isShutdown()) return;
 
         final WCK k = new WCK(snapshot.getWorldName(), chunkX, chunkZ);
 
@@ -469,7 +474,7 @@ public class Y0Plugin {
                         pp.add(py);
                     }
                 } catch (IOException e) {
-                    plugin.getLogger().severe("Payload creation failed: " + e.getMessage());
+                    severe("Payload creation failed: " + e.getMessage());
                 }
             }
             this.cc.put(k, pp);
@@ -528,7 +533,7 @@ public class Y0Plugin {
         return result;
     }
 
-    private void storeCombined(WCK k, ObjectArrayList<byte[]> sections) {
+    private void storeCombined(@Nonnull WCK k, ObjectArrayList<byte[]> sections) {
         byte[] cb = buildCombined(sections);
         if (cb != null) {
             ccCombined.put(k, cb);
@@ -567,8 +572,7 @@ public class Y0Plugin {
 
                 cc.put(k, pp);
                 storeCombined(k, pp);
-            } catch (Exception e) {
-            }
+            } catch (Exception e) { debug("Exception while pre-caching chunk %s, %s for %s: %s".formatted(chunkX, chunkZ, p.getName(), e.getMessage())); }
         });
     }
 
@@ -683,8 +687,7 @@ public class Y0Plugin {
 
                 cc.put(k, pp);
                 storeCombined(k, pp);
-            } catch (Exception ex) {
-            }
+            } catch (Exception ex) { debug("Exception while handling chunk load: "+ex.getMessage()); }
         });
     }
 
@@ -719,9 +722,7 @@ public class Y0Plugin {
             }
         }
 
-        if (!h) {
-            return null;
-        }
+        if (!h) return null;
 
         ByteArrayOutputStream b = tlos.get();
         b.reset();
@@ -811,7 +812,7 @@ public class Y0Plugin {
             });
 
         } catch (IOException e) {
-            plugin.getLogger().severe("Failed to create single block update payload: " + e.getMessage());
+            severe("Failed to create single block update payload: " + e.getMessage());
         }
     }
 
@@ -819,8 +820,7 @@ public class Y0Plugin {
         if (getLightEmissionMethod != null) {
             try {
                 return (int) getLightEmissionMethod.invoke(data);
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         }
         return legacy_light_map.getOrDefault(data.getMaterial(), 0);
     }
@@ -872,7 +872,7 @@ public class Y0Plugin {
                             }
                         });
                     } catch (IOException e) {
-                        plugin.getLogger().severe("Failed to create lighting payload: " + e.getMessage());
+                        severe("Failed to create lighting payload: " + e.getMessage());
                     }
                 });
             }
@@ -906,6 +906,4 @@ public class Y0Plugin {
         }
     }
 
-    private void lfe() {
-    }
 }

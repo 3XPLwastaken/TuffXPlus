@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public final class ViaEntitiesPlugin {
 
@@ -47,7 +48,14 @@ public final class ViaEntitiesPlugin {
     }
 
     public void debug(String message) {
-        plugin.getLogger().info(message);
+        if (isDebug()) info(message);
+    }
+
+    public void log(Level level, String msg) {
+        plugin.getLogger().log(level, "[ViaEntities] "+msg);
+    }
+    public void info(String msg) {
+        log(Level.INFO, msg);
     }
 
     public void onTuffXEnable() {
@@ -62,9 +70,9 @@ public final class ViaEntitiesPlugin {
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, SERVERBOUND_CHANNEL, plugin);
 
         if (enabled) {
-            plugin.getLogger().info("ViaEntities enabled with " + entityMappingManager.getModernEntityCount() + " modern entities");
+            info("ViaEntities enabled with " + entityMappingManager.getModernEntityCount() + " modern entities");
         } else {
-            plugin.getLogger().info("ViaEntities disabled in config");
+            info("ViaEntities disabled in config");
         }
     }
 

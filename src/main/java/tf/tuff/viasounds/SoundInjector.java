@@ -17,14 +17,10 @@ public class SoundInjector {
     public void inject(Player player) {
         UUID uuid = player.getUniqueId();
         var viaConnection = Via.getAPI().getConnection(uuid);
-        if (viaConnection == null) {
-            return;
-        }
+        if (viaConnection == null) return;
 
         Channel channel = viaConnection.getChannel();
-        if (channel == null) {
-            return;
-        }
+        if (channel == null) return;
 
         channel.eventLoop().submit(() -> {
             try {
@@ -52,6 +48,7 @@ public class SoundInjector {
                 }
 
             } catch (Exception e) {
+                plugin.debug("Error injecting: "+e.getMessage());
             }
         });
     }
@@ -69,6 +66,7 @@ public class SoundInjector {
                         channel.pipeline().remove("viasounds_handler");
                     }
                 } catch (Exception e) {
+                    plugin.debug("Error ejecting: "+e.getMessage());
                 }
             });
         }

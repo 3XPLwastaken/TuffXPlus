@@ -1,24 +1,25 @@
 package tf.tuff.tuffactions.creative;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bukkit.plugin.java.JavaPlugin;
-
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.annotation.Nullable;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tf.tuff.tuffactions.TuffActions;
 
 public class TabUtil {
-    private final JavaPlugin plugin;
+    private final TuffActions plugin;
     private final File mappingFile;
     private Map<String, String> creativeTabMap;
 
-    public TabUtil(JavaPlugin plugin) {
+    public TabUtil(TuffActions plugin) {
         this.plugin = plugin;
-        this.mappingFile = new File(plugin.getDataFolder(), "tab-mapping.json");
+        this.mappingFile = new File(plugin.plugin.getDataFolder(), "tab-mapping.json");
 
         setupMappingFile();
         
@@ -27,8 +28,8 @@ public class TabUtil {
 
     private void setupMappingFile() {
         if (!mappingFile.exists()) {
-            plugin.getLogger().info("Creative tab mapping not found, creating from resources...");
-            plugin.saveResource("tab-mapping.json", false);
+            plugin.info("Creative tab mapping not found, creating from resources...");
+            plugin.plugin.saveResource("tab-mapping.json", false);
         }
     }
 
@@ -39,10 +40,10 @@ public class TabUtil {
             TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String, String>>() {};
             
             this.creativeTabMap = mapper.readValue(mappingFile, typeRef);
-            plugin.getLogger().info("Successfully loaded " + creativeTabMap.size() + " creative tab mappings.");
+            plugin.info("Successfully loaded " + creativeTabMap.size() + " creative tab mappings.");
 
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load creative tab mapping from file!", e);
+            plugin.log(Level.SEVERE, "Failed to load creative tab mapping from file!", e);
             this.creativeTabMap = Collections.emptyMap();
         }
     }

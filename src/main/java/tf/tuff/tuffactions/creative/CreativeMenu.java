@@ -28,7 +28,7 @@ public class CreativeMenu {
 
     public CreativeMenu(TuffActions plugin) {
         this.plugin = plugin;
-        this.tabUtil = new TabUtil(plugin.plugin);
+        this.tabUtil = new TabUtil(plugin);
         
         if (TuffActions.creativeEnabled) {
             initializeMappings();
@@ -56,7 +56,7 @@ public class CreativeMenu {
             
             plugin.sendPluginMessage(player, bout.toByteArray());
         } catch (IOException e) {
-            plugin.plugin.getLogger().log(Level.WARNING, "Failed to send creative items to " + player.getName(), e);
+            plugin.log(Level.WARNING, "Failed to send creative items to " + player.getName(), e);
         }
     }
 

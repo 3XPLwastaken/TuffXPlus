@@ -1,21 +1,5 @@
 package tf.tuff.tuffactions;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerCommon;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
-import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
-import tf.tuff.tuffactions.creative.CreativeMenu;
-import tf.tuff.tuffactions.swimming.Swimming;
-import org.bukkit.GameMode;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.entity.EntityToggleSwimEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -25,7 +9,19 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+import org.bukkit.GameMode;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
+import org.bukkit.event.entity.EntityToggleSwimEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage;
+
 import tf.tuff.TuffX;
+import tf.tuff.tuffactions.creative.CreativeMenu;
+import tf.tuff.tuffactions.swimming.Swimming;
 
 public class TuffActions {
 
@@ -33,54 +29,52 @@ public class TuffActions {
 
     private Swimming swimmingManager;
     private CreativeMenu creativeManager;
-    private PacketListenerCommon packetListener;
 
     public static boolean swimmingEnabled = false;
     public static boolean creativeEnabled = false;
     
-    public TuffX plugin;
+    public final TuffX plugin;
 
     public static final Set<UUID> tuffPlayers = ConcurrentHashMap.newKeySet();
 
-    public void onTuffXLoad() {
-       
-    }
-    
-    public void onTuffXReload() {
-        swimmingEnabled = plugin.getConfig().getBoolean("swimming.enabled", true);
-        creativeEnabled = plugin.getConfig().getBoolean("creative-items.enabled", true);
-
-        plugin.getLogger().info("Misc features reloaded.");
-    }
-    
     public TuffActions(TuffX plugin){
         this.plugin = plugin;
     }
 
-    public void onTuffXEnable() {
+    private void loadConfig() {
         plugin.saveDefaultConfig();
-        plugin.getLogger().info("TuffActions has been enabled");
-        plugin.getLogger().info("Enabling features...");
+        info("TuffActions has been enabled");
+        info("Enabling features...");
 
         swimmingEnabled = plugin.getConfig().getBoolean("swimming.enabled", true);
         creativeEnabled = plugin.getConfig().getBoolean("creative-items.enabled", true);
 
-        if (swimmingEnabled) plugin.getLogger().info("Swimming enabled.");
-        if (creativeEnabled) plugin.getLogger().info("Creative items enabled.");
+        if (swimmingEnabled) info("Swimming enabled.");
+        if (creativeEnabled) info("Creative items enabled.");
+    }
 
+    public void onTuffXLoad() {
+    }
+    
+    public void onTuffXReload() {
+        loadConfig();
+
+        info("Misc features reloaded.");
+    }
+
+    public void onTuffXEnable() {
+        loadConfig();
         PacketEvents.getAPI().init();
 
         this.swimmingManager = new Swimming(this);
         this.creativeManager = new CreativeMenu(this);
-        plugin.getLogger().info("Finished enabling features.");
-        logEnable();
+        info("Finished enabling features.");
 
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "eagler:tuffactions");
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "eagler:tuffactions", plugin);
     }
 
     public void onTuffXDisable() {
-        
     }
 
     public void handlePacket(Player player, byte[] message) {
@@ -137,7 +131,7 @@ public class TuffActions {
                 creativeManager.handlePickViablock(player, blockName, hotbarSlot);
             }
         } catch (IOException e) {
-                plugin.getLogger().log(Level.WARNING, "Failed to read a plugin message from " + player.getName(), e);
+            log(Level.WARNING, "Failed to read a plugin message from " + player.getName(), e);
         }
     }
 
@@ -178,7 +172,13 @@ public class TuffActions {
         }
     }
 
-    public void logEnable(){
-        plugin.getLogger().info("Selected features enabled.");
+    public void log(Level level, String msg, Throwable e) {
+        plugin.getLogger().log(level, "[TuffActions] "+msg, e);
+    }
+    public void log(Level level, String msg) {
+        plugin.getLogger().log(level, "[TuffActions] "+msg);
+    }
+    public void info(String msg) {
+        log(Level.INFO, msg);
     }
 }

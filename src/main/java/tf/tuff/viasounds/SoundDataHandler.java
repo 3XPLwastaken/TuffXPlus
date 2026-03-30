@@ -3,6 +3,10 @@ package tf.tuff.viasounds;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import org.bukkit.entity.Player;
 
 import com.google.common.io.ByteArrayDataOutput;
@@ -37,35 +41,35 @@ public class SoundDataHandler extends ChannelOutboundHandlerAdapter {
                 String soundName = soundHolderStr.substring(locationStart, locationEnd);
 
                 if (soundFileManager.isModernSound(soundName)) {
-                    java.lang.reflect.Field categoryField = msg.getClass().getDeclaredField("d");
+                    Field categoryField = msg.getClass().getDeclaredField("d");
                     categoryField.setAccessible(true);
                     Object categoryEnum = categoryField.get(msg);
 
                     int category = 0;
                     try {
-                        java.lang.reflect.Method ordinalMethod = categoryEnum.getClass().getMethod("ordinal");
+                        Method ordinalMethod = categoryEnum.getClass().getMethod("ordinal");
                         category = (int) ordinalMethod.invoke(categoryEnum);
                     } catch (Exception e) {
                         category = 0;
                     }
 
-                    java.lang.reflect.Field xField = msg.getClass().getDeclaredField("e");
+                    Field xField = msg.getClass().getDeclaredField("e");
                     xField.setAccessible(true);
                     int fixedX = (int) xField.get(msg);
 
-                    java.lang.reflect.Field yField = msg.getClass().getDeclaredField("f");
+                    Field yField = msg.getClass().getDeclaredField("f");
                     yField.setAccessible(true);
                     int fixedY = (int) yField.get(msg);
 
-                    java.lang.reflect.Field zField = msg.getClass().getDeclaredField("g");
+                    Field zField = msg.getClass().getDeclaredField("g");
                     zField.setAccessible(true);
                     int fixedZ = (int) zField.get(msg);
 
-                    java.lang.reflect.Field volumeField = msg.getClass().getDeclaredField("h");
+                    Field volumeField = msg.getClass().getDeclaredField("h");
                     volumeField.setAccessible(true);
                     float volume = (float) volumeField.get(msg);
 
-                    java.lang.reflect.Field pitchField = msg.getClass().getDeclaredField("i");
+                    Field pitchField = msg.getClass().getDeclaredField("i");
                     pitchField.setAccessible(true);
                     float pitch = (float) pitchField.get(msg);
 
@@ -95,8 +99,7 @@ public class SoundDataHandler extends ChannelOutboundHandlerAdapter {
                         return;
                     }
                 }
-            } catch (Exception e) {
-            }
+            } catch (Exception e) { plugin.debug("Error writing to channel: "+e.getMessage()); }
         }
         super.write(ctx, msg, promise);
     }

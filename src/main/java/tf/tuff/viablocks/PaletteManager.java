@@ -1,32 +1,35 @@
 package tf.tuff.viablocks;
 
-import tf.tuff.viablocks.version.VersionAdapter;
-import org.bukkit.Material;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+
+import tf.tuff.viablocks.version.VersionAdapter;
+
 public class PaletteManager {
+    
+    ViaBlocksPlugin plugin;
 
     private final CopyOnWriteArrayList<String> palette = new CopyOnWriteArrayList<>();
     private final Map<String, Integer> stateToIdMap = new ConcurrentHashMap<>();
     private volatile List<String> paletteSnapshot;
 
-    public PaletteManager(VersionAdapter versionAdapter, Logger logger) {
-        generate(versionAdapter, logger);
+    public PaletteManager(VersionAdapter versionAdapter) {
+        plugin = ViaBlocksPlugin.instance;
+        generate(versionAdapter);
     }
 
-    private void generate(VersionAdapter versionAdapter, Logger logger) {
-        logger.info("Generating ViaBlocks Pre-Defined Palette...");
+    private void generate(VersionAdapter versionAdapter) {
+        plugin.info("Generating ViaBlocks Pre-Defined Palette...");
         
         List<String> initialPalette = new ArrayList<>();
 
@@ -71,7 +74,7 @@ public class PaletteManager {
 
         palette.addAll(initialPalette);
         paletteSnapshot = new ArrayList<>(palette);
-        logger.info("Palette initialized with " + palette.size() + " entries.");
+        plugin.info("Palette initialized with " + palette.size() + " entries.");
     }
 
     private void addEntryInternal(List<String> localPalette, String state) {
@@ -102,19 +105,14 @@ public class PaletteManager {
     }
 
     private void broadcastNewPaletteEntry(String state) {
-        ViaBlocksPlugin plugin = ViaBlocksPlugin.instance;
-        if (plugin == null || !plugin.plugin.isEnabled()) {
-            return;
-        }
+        if (plugin == null || !plugin.plugin.isEnabled() || !plugin.isEnabled()) return;
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("NEW_PALETTE_ENTRY");
         out.writeUTF(state);
         byte[] data = out.toByteArray();
 
         Bukkit.getScheduler().runTask(plugin.plugin, () -> {
-            if (!plugin.plugin.isEnabled()) {
-                return;
-            }
+            if (!plugin.plugin.isEnabled() || !plugin.isEnabled()) return;
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (plugin.isPlayerEnabled(player)) {
                     player.sendPluginMessage(plugin.plugin, ViaBlocksPlugin.CLIENTBOUND_CHANNEL, data);

@@ -5,20 +5,20 @@
 y0:
   y0-enabled: true
 
-  #debug mode
+  # Debug mode
   debug-mode: false
 
-  #worlds for y0 to be enabled in
+  # Worlds for y0 to be enabled in
   enabled-worlds:
-      - 'world'
+    - 'world'
 
-  #the amount of threads for the chunk processor to use - using more threads processes chunks faster, but increases CPU usage
-  #-1 is automatic
+  # The amount of threads for the chunk processor to use - using more threads processes chunks faster, but increases CPU usage
+  # -1 is automatic
   chunk-processor-threads: -1
 
-  #the size of the cache
+  # The size of the cache
   cache-size: 512
-  #how long until the cache expires (minutes)
+  # How long until the cache expires (minutes)
   cache-expiration: 5
 
   # Kick outdated clients that (generally) not compatible with this version of TuffX
@@ -30,18 +30,18 @@ y0:
 #  ||\\ ||== \\__/ || =//   ||  ||\\  ||
 
 registry:
-    # Set to true to list your server on the tuffclient discovery
-    enabled: false
-    # websocket url for the server discovery
-    server-url: 'wss://api.tuffest.org/ws'
-    # ip for ur eaglercraft server
-    server: 'wss://urserverip.net'
- 
-    
+  # Set to true to list your server on the TuffClient discovery
+  enabled: false
+  # WebSocket URL for the server discovery
+  server-url: 'wss://api.tuffest.org/ws'
+  # IP for your Eaglercraft server
+  server: 'wss://urserverip.net'
+
+
 #\\    // <>   //\\   ||\\ ||    //=\\   //= ||//   //=
 # \\  //  ||  //==\\  ||<< ||   ||   || ||   ||\\   \\
 #  \\//   || //    \\ ||// ||==  \\=//   \\= || \\ =//
- 
+
 viablocks:
   viablocks-enabled: true
 
@@ -57,29 +57,28 @@ viablocks:
   sync-mode: normal
 
 
-#\\    // <>   //\\   //= //=\\ ||  || ||\\ || ||\\   //=
-# \\  //  ||  //==\\ ||  ||   || ||  || ||// || ||//  \\
-#  \\//   || //    \\  \\= \\=//  \\==// ||   || ||   =//
+#\\    // <>   //\\   //=  //=\\  ||  || ||\\ || ||\\  //=
+# \\  //  ||  //==\\  \\  ||   || ||  || || \\|| || || \\
+#  \\//   || //    \\ =//  \\=//  \\==// ||   || ||// =//
 
 viasounds:
   viasounds-enabled: true
 
-  #Debug
+  # Debug
   debug: false
 
   # Max distance sounds can be sent (-1 = default)
   max-distance: -1
-  
+
 
 # //=\\ ==== ||  || ||== ||\\
 #||   || ||  ||==|| ||== ||//
 # \\=//  ||  ||  || ||== ||\\
 
-#1.13+ swimming
+# 1.13+ swimming
 swimming:
   enabled: true
 
-#allows players to see 1.13+ things in creative menu
+# Allows players to see 1.13+ things in creative menu
 creative-items:
-
   enabled: true

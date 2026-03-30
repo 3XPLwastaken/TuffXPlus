@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public final class ViaSoundsPlugin {
 
@@ -22,14 +23,13 @@ public final class ViaSoundsPlugin {
     private boolean debug = false;
     private int maxDistance = -1;
 
-    public TuffX plugin;
+    public final TuffX plugin;
 
     public ViaSoundsPlugin(TuffX plugin){
-         this.plugin = plugin;
+        this.plugin = plugin;
     }
 
     public void onTuffXLoad() {
-
     }
 
     public void onTuffXReload() {
@@ -54,9 +54,9 @@ public final class ViaSoundsPlugin {
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, SERVERBOUND_CHANNEL, plugin);
 
         if (enabled) {
-            plugin.getLogger().info("ViaSounds enabled with " + soundFileManager.getAllSoundPaths().size() + " sounds");
+            info("ViaSounds enabled with " + soundFileManager.getAllSoundPaths().size() + " sounds");
         } else {
-            plugin.getLogger().info("ViaSounds disabled in config");
+            info("ViaSounds disabled in config");
         }
     }
 
@@ -66,6 +66,22 @@ public final class ViaSoundsPlugin {
 
     public boolean isDebug() {
         return debug;
+    }
+    public void debug(String message) {
+        if (isDebug()) info(message);
+    }
+
+    public void log(Level level, String msg, Throwable e) {
+        plugin.getLogger().log(level, "[ViaSounds] "+msg, e);
+    }
+    public void log(Level level, String msg) {
+        plugin.getLogger().log(level, "[ViaSounds] "+msg);
+    }
+    public void info(String msg) {
+        log(Level.INFO, msg);
+    }
+    public void severe(String msg) {
+        log(Level.SEVERE, msg);
     }
 
     public int getMaxDistance() {
