@@ -29,10 +29,6 @@ public final class ViaEntitiesPlugin {
         this.plugin = plugin;
     }
 
-    public void onTuffXLoad() {
-
-    }
-
     public void onTuffXReload() {
         loadConfig();
     }

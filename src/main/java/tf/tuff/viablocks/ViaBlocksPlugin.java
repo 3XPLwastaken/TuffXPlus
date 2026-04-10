@@ -9,10 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -30,7 +27,6 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
 import tf.tuff.viablocks.version.VersionAdapter;
-import tf.tuff.viablocks.version.legacy.LegacyAdapter;
 import tf.tuff.viablocks.version.modern.ModernAdapter;
 import tf.tuff.TuffX;
 
@@ -64,9 +60,6 @@ public final class ViaBlocksPlugin {
         this.plugin = plugin;
     }   
 
-    public void onTuffXLoad() {
-    }
-
     public void onTuffXReload() {
         loadSyncSettings();
 
@@ -92,10 +85,7 @@ public final class ViaBlocksPlugin {
 
         this.chunkExecutor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors()));
 
-        if (!setupVersionAdapter()) {
-            severe("Could not detect server version. This plugin may not work correctly.");
-            this.versionAdapter = new LegacyAdapter();
-        }
+        this.versionAdapter = new ModernAdapter();
 
         this.paletteManager = new PaletteManager(this.versionAdapter);
 
@@ -149,25 +139,6 @@ public final class ViaBlocksPlugin {
             mode = "normal";
         }
         this.updateBatchDelayTicks = mode.equalsIgnoreCase("reduced") ? 10L : 1L;
-    }
-
-    private boolean setupVersionAdapter() {
-        try {
-            Pattern pattern = Pattern.compile("1\\.(\\d{1,2})");
-            Matcher matcher = pattern.matcher(Bukkit.getBukkitVersion());
-            if (matcher.find()) {
-                int minorVersion = Integer.parseInt(matcher.group(1));
-                if (minorVersion >= 13) {
-                    this.versionAdapter = new ModernAdapter();
-                } else {
-                    this.versionAdapter = new LegacyAdapter();
-                }
-                return true;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
     }
 
     public void onTuffXDisable(){

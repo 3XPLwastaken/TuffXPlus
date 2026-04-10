@@ -58,20 +58,6 @@ viablocks:
   sync-mode: normal
 
 
-#\\    // <>   //\\   //=  //=\\  ||  || ||\\ || ||\\  //=
-# \\  //  ||  //==\\  \\  ||   || ||  || || \\|| || || \\
-#  \\//   || //    \\ =//  \\=//  \\==// ||   || ||// =//
-
-viasounds:
-  viasounds-enabled: true
-
-  # Debug
-  debug: false
-
-  # Max distance sounds can be sent (-1 = default)
-  max-distance: -1
-
-
 # //=\\ ==== ||  || ||== ||\\
 #||   || ||  ||==|| ||== ||//
 # \\=//  ||  ||  || ||== ||\\

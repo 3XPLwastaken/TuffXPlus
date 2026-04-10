@@ -114,9 +114,6 @@ public class Y0Plugin {
 
     public record WCK(String w, int x, int z) {}
 
-    public void onTuffXLoad() {
-    }
-    
     public void onTuffXReload() {
         d = plugin.getConfig().getBoolean("y0.debug-mode", false);
         

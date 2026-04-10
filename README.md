@@ -5,7 +5,7 @@
 TuffX-United is a single, unified plugin that combines:
 - TuffX (Below Y0 support for modern world depth)
 - ViaBlocks (custom block palette + chunk updates for modern blocks)
-- ViaSounds (modern sound support)
+- ViaEntities (modern entity sync without nametags)
 - TuffActions (swimming sync + creative item handling)
 
 **This is not a "crack" for Minecraft. It only enables extra client integration features for TuffClient/Eaglercraft.**
@@ -20,13 +20,13 @@ PacketEvents, Jackson, and WebSocket libraries are shaded into the jar.
 ## Install
 1. Drop `TuffX-United-0.0.1.jar` into your server's `plugins` folder.
 2. Start the server to generate `plugins/TuffX/config.yml`.
-3. Configure features in `config.yml` (`y0`, `registry`, `viablocks`, `viasounds`,  `swimming`, `creative-items`, `restrictions`).
+3. Configure features in `config.yml` (`y0`, `registry`, `viablocks`,  `swimming`, `creative-items`, `restrictions`).
 4. Restart or run `/tuffx reload`.
 
 ## Features
 - Below Y0: sends extra chunk data for Y < 0 so TuffX client can see and interact with modern world depth.
 - ViaBlocks: synchronizes modern block states to TuffX client with a custom palette.
-- ViaSounds: intercepts modern sound packets and sends them to TuffX client.
+- ViaEntities: syncs modern entites to TuffX client without nametags.
 - TuffActions: swimming state sync and creative item handling.
 - Restrictions: disallow TuffClient modules: [module list](/docs/restrictions.md)
 - Optional server registry over WebSocket (for discovery).

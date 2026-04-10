@@ -60,9 +60,6 @@ public class TuffActions {
         if (restrictionsEnabled) info("Restrictions enabled.");
     }
 
-    public void onTuffXLoad() {
-    }
-    
     public void onTuffXReload() {
         loadConfig();
         restrictions.onTuffXReload();
@@ -81,9 +78,6 @@ public class TuffActions {
 
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "eagler:tuffactions");
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, "eagler:tuffactions", plugin);
-    }
-
-    public void onTuffXDisable() {
     }
 
     public boolean onTuffXCommand(CommandSender sender, Command command, String label, String[] args) {
