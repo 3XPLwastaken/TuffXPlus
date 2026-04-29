@@ -58,6 +58,20 @@ viablocks:
   sync-mode: normal
 
 
+#\\    // <>   //\\   ||=== ||\ || ===== <> ===== <> ||===  //=
+# \\  //  ||  //==\\  ||=== ||\\||  ||   ||  ||   || ||===  \\
+#  \\//   || //    \\ ||=== || \||  ||   ||  ||   || ||=== =//
+
+viaentities:
+  viaentities-enabled: true
+
+  # Set to true to enable detailed logging in the server console for debugging.
+  debug: false
+
+  # Measured in blocks, leave as '-1' for the default view distance.
+  max-distance: -1'
+
+
 # //=\\ ==== ||  || ||== ||\\
 #||   || ||  ||==|| ||== ||//
 # \\=//  ||  ||  || ||== ||\\
@@ -66,7 +80,7 @@ viablocks:
 swimming:
   enabled: true
 
-# Allows players to see 1.13+ things in creative menu
+# Allows players to see 1.13+ things in the creative menu
 creative-items:
   enabled: true
 
