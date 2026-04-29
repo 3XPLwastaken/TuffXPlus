@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import tf.tuff.viablocks.CustomBlockListener;
 import tf.tuff.y0.Y0Plugin;
@@ -143,7 +144,17 @@ public class ChunkHandler extends ChannelOutboundHandlerAdapter {
         if (z >= 0x2000000) z -= 0x4000000;
         if (y >= 0x800) y -= 0x1000;
 
-        byte[] data = viaBlocks.getExtraDataForSingleBlock(player.getWorld(), x, y, z);
+        World world = player.getWorld();
+
+        // end this call if the chunk called upon is not loaded
+        // it seems like it should never happen, but it does, and it causes crashes.
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            buf.resetReaderIndex();
+            super.write(ctx, buf, promise);
+            return;
+        }
+
+        byte[] data = viaBlocks.getExtraDataForSingleBlock(world, x, y, z);
         if (data != null && data.length > 0) {
             buf.resetReaderIndex();
             writeWithViaOnly(ctx, buf, promise, data);
