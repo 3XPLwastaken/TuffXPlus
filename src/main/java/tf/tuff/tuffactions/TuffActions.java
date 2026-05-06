@@ -33,10 +33,6 @@ public class TuffActions {
     private Swimming swimmingManager;
     private CreativeMenu creativeManager;
     private Restrictions restrictions;
-
-    public static boolean swimmingEnabled = false;
-    public static boolean creativeEnabled = false;
-    public static boolean restrictionsEnabled = false;
     
     public final TuffX plugin;
 
@@ -51,29 +47,25 @@ public class TuffActions {
         info("TuffActions has been enabled");
         info("Enabling features...");
 
-        swimmingEnabled = plugin.getConfig().getBoolean("swimming.enabled", true);
-        creativeEnabled = plugin.getConfig().getBoolean("creative-items.enabled", true);
-        restrictionsEnabled = plugin.getConfig().getBoolean("restrictions.enabled", false);
-
-        if (swimmingEnabled) info("Swimming enabled.");
-        if (creativeEnabled) info("Creative items enabled.");
-        if (restrictionsEnabled) info("Restrictions enabled.");
+        swimmingManager.onConfigLoad();
+        creativeManager.onConfigLoad();
+        restrictions.onConfigLoad();
     }
 
     public void onTuffXReload() {
         loadConfig();
-        restrictions.onTuffXReload();
 
         info("Misc features reloaded.");
     }
 
     public void onTuffXEnable() {
-        loadConfig();
         PacketEvents.getAPI().init();
 
         this.swimmingManager = new Swimming(this);
         this.creativeManager = new CreativeMenu(this);
         this.restrictions = new Restrictions(this);
+
+        loadConfig();
         info("Finished enabling features.");
 
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, "eagler:tuffactions");
@@ -103,15 +95,16 @@ public class TuffActions {
 
             tuffPlayers.add(player.getUniqueId());
 
-            if ("swimming_state".equals(action) && swimmingEnabled) {
+            if ("swimming_state".equals(action)) {
                 swimmingManager.handleSwimState(player, in.readBoolean());
-            } else if ("elytra_state".equals(action) && swimmingEnabled) {
+            } else if ("elytra_state".equals(action)) {
                 swimmingManager.handleElytraState(player, in.readBoolean());
-            } else if ("creative_ready".equals(action) && creativeEnabled){
-                creativeManager.handleCreativeReady(player);
-            } else if ("swim_ready".equals(action) && swimmingEnabled){
+            } else if ("swim_ready".equals(action)){
                 swimmingManager.handleSwimReady(player);
-            } else if ("give_creative_item".equals(action) && creativeEnabled){
+            } else if ("creative_ready".equals(action)){
+                creativeManager.handleCreativeReady(player);
+            } else if ("give_creative_item".equals(action)){
+                if (!creativeManager.isEnabled()) return;
                 if (player.getGameMode() != GameMode.CREATIVE) {
                     return;
                 }
@@ -124,7 +117,8 @@ public class TuffActions {
                 String item = new String(itemBytes, StandardCharsets.UTF_8);
                 int amount = in.readInt();
                 creativeManager.handlePlaceholderTaken(player, item, amount);
-            } else if ("pick_viablock".equals(action) && creativeEnabled){
+            } else if ("pick_viablock".equals(action)){
+                if (!creativeManager.isEnabled()) return;
                 if (player.getGameMode() != GameMode.CREATIVE) {
                     return;
                 }
@@ -158,28 +152,20 @@ public class TuffActions {
     }
 
     public void handlePlayerQuit(PlayerQuitEvent event) {
-        if (swimmingEnabled) {
-            swimmingManager.handleSwimQuit(event);
-        }
+        swimmingManager.handleSwimQuit(event);
         tuffPlayers.remove(event.getPlayer().getUniqueId());
     }
 
     public void handleToggleSwim(EntityToggleSwimEvent event) {
-        if (swimmingEnabled) {
-            swimmingManager.handleToggleSwim(event);
-        }
+        swimmingManager.handleToggleSwim(event);
     }
 
     public void handleToggleGlide(EntityToggleGlideEvent event) {
-        if (swimmingEnabled) {
-            swimmingManager.handleToggleGlide(event);
-        }
+        swimmingManager.handleToggleGlide(event);
     }
 
     public void handlePlayerInventoryClick(InventoryClickEvent event) {
-        if (creativeEnabled) {
-            creativeManager.onPlayerInventoryClick(event);
-        }
+        creativeManager.onPlayerInventoryClick(event);
     }
 
     public void log(Level level, String msg, Throwable e) {

@@ -27,6 +27,9 @@ public final class ViaEntitiesPlugin {
 
     public ViaEntitiesPlugin(TuffX plugin) {
         this.plugin = plugin;
+        plugin.getConfig().addDefault("viaentities.viaentities-enabled", true);
+        plugin.getConfig().addDefault("viaentities.debug", false);
+        plugin.getConfig().addDefault("viaentities.max-distance", -1);
     }
 
     public void onTuffXReload() {
@@ -34,9 +37,9 @@ public final class ViaEntitiesPlugin {
     }
 
     private void loadConfig() {
-        enabled = plugin.getConfig().getBoolean("viaentities.viaentities-enabled", true);
-        debug = plugin.getConfig().getBoolean("viaentities.debug", true);
-        maxDistance = plugin.getConfig().getInt("viaentities.max-distance", -1);
+        enabled = plugin.getConfig().getBoolean("viaentities.viaentities-enabled");
+        debug = plugin.getConfig().getBoolean("viaentities.debug");
+        maxDistance = plugin.getConfig().getInt("viaentities.max-distance");
     }
 
     public boolean isDebug() {

@@ -14,10 +14,10 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import tf.tuff.tuffactions.TuffActionBase;
 import tf.tuff.tuffactions.TuffActions;
 
-public class Restrictions {
-	private final TuffActions plugin;
+public class Restrictions extends TuffActionBase {
     private RestrictionsCommand commandHandler;
 	private Set<String> disallowed = ConcurrentHashMap.newKeySet();
 
@@ -26,45 +26,35 @@ public class Restrictions {
 	);
 
 	public Restrictions(TuffActions plugin) {
-		this.plugin = plugin;
+		super(plugin, "Restrictions", "restrictions", false);
         this.commandHandler = new RestrictionsCommand(this, plugin.plugin);
-		validateConfig();
-		loadConfig();
+		plugin.plugin.getConfig().addDefault("restrictions.disallow", example);
 	}
 
-	private void validateConfig() {
-		boolean configUpdated = false;
-		if (!plugin.plugin.getConfig().contains("restrictions.enabled", true)) {
-			plugin.plugin.getConfig().set("restrictions.enabled", false);
-			configUpdated = true;
-		}
-		if (!plugin.plugin.getConfig().contains("restrictions.disallow", true)) {
-			plugin.plugin.getConfig().set("restrictions.disallow", example);
-			configUpdated = true;
-		}
-		if (configUpdated) {
-			plugin.plugin.saveConfig();
-			plugin.info("Restrictions config updated");
-		}
-	}
 	public void loadConfig() {
 		disallowed.clear();
-		if (!TuffActions.restrictionsEnabled) return;
 		plugin.info("Loading Restrictions config...");
-		List<?> config = plugin.plugin.getConfig().getList("restrictions.disallow", example);
+		List<?> config = plugin.plugin.getConfig().getList("restrictions.disallow");
 		for (Object val : config) {
 			if (val instanceof String) disallowed.add((String)val);
 		}
 	}
 
-	public void onTuffXReload() {
-		validateConfig();
+	@Override
+	protected void enable(boolean wasEnabled) {
 		loadConfig();
+		super.enable(wasEnabled);
+	}
+	@Override
+	protected void disable() {
+		disallowed.clear();
+		super.disable();
 	}
 
+	/*** CUSTOM SERVER-BOUND PACKETS ***/
 	public void handleRestrictionsReady(Player player) {
-		if (!TuffActions.restrictionsEnabled) return;
-		plugin.info("Sending restrictions to %s".formatted(player.getName()));
+		if (!isEnabled()) return;
+		debug("Sending restrictions to %s".formatted(player.getName()));
 		try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bout)) {
 			out.writeUTF("client_features_all");
 			out.writeInt(disallowed.size());
@@ -76,10 +66,11 @@ public class Restrictions {
 
 			plugin.sendPluginMessage(player, bout.toByteArray());
 		} catch (IOException e) {
-			plugin.log(Level.WARNING, "Failed to send Restrictions to " + player.getName(), e);
+			debug("Failed to send Restrictions to " + player.getName(), e);
 		}
 	}
 
+	/*** CUSTOM CLIENT-BOUND PACKETS ***/
 	public void sendSingleUpdateToAll(String key) {
 		for (UUID uuid : TuffActions.tuffPlayers) {
 			Player player = Bukkit.getPlayer(uuid);
@@ -88,8 +79,8 @@ public class Restrictions {
 	}
 
 	private void handleSingleUpdate(Player player, String key) {
-		if (!TuffActions.restrictionsEnabled) return;
-		plugin.info("Sending restriction update for '%s' to %s".formatted(key, player.getName()));
+		if (!isEnabled()) return;
+		debug("Sending restriction update for '%s' to %s".formatted(key, player.getName()));
 		try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bout)) {
 			out.writeUTF("client_feature");
 			out.writeUTF(key);
@@ -101,7 +92,12 @@ public class Restrictions {
 		}
 	}
 
+	/*** COMMANDS ***/
 	public boolean onTuffXCommand(CommandSender sender, Command command, String label, String[] args) {
+		if (!isEnabled()) {
+			sender.sendMessage("Restrictions are currently disabled.");
+			return true;
+		}
 		return commandHandler.onCommand(sender, command, label, args);
 	}
 

@@ -64,6 +64,8 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
         y0Plugin.setChunkInjector(chunkInjector);
 
         saveDefaultConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
 
         PacketEvents.getAPI().getEventManager().registerListener(
             new NetworkListener(this), PacketListenerPriority.NORMAL
@@ -102,8 +104,10 @@ public class TuffX extends JavaPlugin implements Listener, PluginMessageListener
     }
 
     public void reloadTuffX(){
-        reloadConfig();
         saveDefaultConfig();
+        reloadConfig();
+        getConfig().options().copyDefaults(true);
+        saveConfig();
 
         if (serverRegistry != null) {
             serverRegistry.disconnect();
