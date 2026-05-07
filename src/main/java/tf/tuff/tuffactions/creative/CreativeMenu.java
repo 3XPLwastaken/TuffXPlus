@@ -1,5 +1,6 @@
 package tf.tuff.tuffactions.creative;
 
+import tf.tuff.tuffactions.TuffActionBase;
 import tf.tuff.tuffactions.TuffActions;
 
 import org.bukkit.Bukkit;
@@ -17,22 +18,29 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
-public class CreativeMenu {
-    private final TuffActions plugin; 
+public class CreativeMenu extends TuffActionBase {
     private final Set<String> itemMapping = ConcurrentHashMap.newKeySet();
     private final Map<UUID, ItemStack> playerHoldingPlaceholder = new ConcurrentHashMap<>();
-    
+
     private final TabUtil tabUtil;
 
     public CreativeMenu(TuffActions plugin) {
-        this.plugin = plugin;
+        super(plugin, "Creative Items", "creative-items", true);
         this.tabUtil = new TabUtil(plugin);
-        
-        if (TuffActions.creativeEnabled) {
-            initializeMappings();
+    }
+
+    @Override
+    protected void enable(boolean wasEnabled) {
+        if (!wasEnabled) {
+            if (itemMapping.isEmpty()) initializeMappings();
         }
+        super.enable(wasEnabled);
+    }
+    @Override
+    protected void disable() {
+        itemMapping.clear();
+        super.disable();
     }
 
     public void initializeMappings() {
@@ -43,7 +51,9 @@ public class CreativeMenu {
         }
     }
 
+    /*** CUSTOM SERVER-BOUND PACKETS ***/
     public void handleCreativeReady(Player player) {
+        if (!isEnabled()) return;
         try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(bout)) {
             out.writeUTF("creative_items");
             out.writeInt(itemMapping.size());
@@ -53,10 +63,10 @@ public class CreativeMenu {
                 String category = this.tabUtil.getCreativeCategory(item);
                 out.writeUTF(category != null ? category : "");
             }
-            
+
             plugin.sendPluginMessage(player, bout.toByteArray());
         } catch (IOException e) {
-            plugin.log(Level.WARNING, "Failed to send creative items to " + player.getName(), e);
+            debug("Failed to send creative items to " + player.getName(), e);
         }
     }
 
@@ -79,7 +89,9 @@ public class CreativeMenu {
         player.getInventory().setItem(hotbarSlot, new ItemStack(material, 1));
     }
 
+    /*** EVENT HANDLERS ***/
     public void onPlayerInventoryClick(InventoryClickEvent event) {
+        if (!isEnabled()) return;
         Player player = (Player) event.getWhoClicked();
         UUID playerUUID = player.getUniqueId();
 
@@ -89,13 +101,13 @@ public class CreativeMenu {
 
                 Bukkit.getScheduler().runTaskLater(this.plugin.plugin, () -> {
                     ItemStack realItemStack = playerHoldingPlaceholder.get(playerUUID);
-                    
+
                     if (realItemStack != null && event.getClickedInventory() != null) {
                         event.getClickedInventory().setItem(event.getSlot(), realItemStack);
                     }
-                    
+
                     playerHoldingPlaceholder.remove(playerUUID);
-                }, 1L); 
+                }, 1L);
             }
         }
     }
